@@ -7,18 +7,18 @@ Sorcery.initialize(function(){
 
     Router.initialize(arguments);
     
-    /*var urls=[
+    var urls=[
       Router.generate('root'),
       Router.generate('hello'),
       Router.generate('hello',{
         name:'john',
       }),
-      Router.generate('hi'),
-    ];*/
+      Router.generate('hi',{
+        name:'pete',
+      }),
+    ];
     
-    //console.log('URL',urls);
-    
-    //Router.initialize();
+    console.log('URL',urls);
     
   });
   
