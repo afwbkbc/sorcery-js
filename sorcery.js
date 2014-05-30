@@ -1,22 +1,33 @@
-//var config = require('./config.js');
-
-var core=null;
-
 if (typeof(GLOBAL.Sorcery) === 'undefined') {
   
   GLOBAL.Sorcery = {
-  
-    packages : [
-      'sorcery',
-    ],
     
-    require : function(modulenames,callback) {
-      //console.log('REQUIRING',modulenames);
+    ENVIRONMENT_CLI : 'cli',
+    ENVIRONMENT_WEB : 'web',
+      
+    packages : [ 'sorcery' ],
+
+    required : [],
+  
+    requiring : [],
+  
+    require_environment : function(desired_environment) {
+      if (this.environment!=desired_environment)
+        throw new Error('This routine requires "'+desired_environment+'" environment, but "'+this.environment+'" is active!');
+    },
+  
+  };
+  
+  if (typeof module !== 'undefined' && module.exports) {
+    
+    Sorcery.environment = Sorcery.ENVIRONMENT_CLI;
+    
+    Sorcery.require = function(modulenames,callback) {
       if (typeof(modulenames)==='string')
         modulenames=[modulenames];
-      var look_in=['../app/','../packages/'];
+      var look_in=['./app/','./packages/'];
       for (var i in this.packages)
-        look_in.push('../packages/'+this.packages[i]+'/');
+        look_in.push('./packages/'+this.packages[i]+'/');
       var collectedmodules=[];
       var self=this;
       var innerloop=function() {
@@ -24,7 +35,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           var modulename=modulenames[0];
           modulenames=modulenames.splice(1);
           if (typeof(self.required[modulename])==='undefined') {
-            //console.log('NEED MODULE',modulename);
             var module=null;
             for (var ii in look_in) {
               try {
@@ -35,7 +45,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                 else
                   continue;
               }
-              //console.log('RESOLVED TO',modulepath);
               self.requiring[modulepath]=modulename;
               module=require(modulepath);
               break;
@@ -46,39 +55,31 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           }
           collectedmodules.push(self.required[modulename]);
         }
-        //console.log('REQUIRE COMPLETED',collectedmodules,callback);
         callback.apply(null,collectedmodules);
       };
       innerloop();
-    },
+    };
     
-    define : function(modulenames,callback) {
+    Sorcery.define = function(modulenames,callback) {
       var modulepath=arguments.callee.caller.arguments[2].id;
       var modulename=this.requiring[modulepath];
       if (modulename) {
-        //console.log('DEFINING',modulename,modulenames,callback);
         Sorcery.require(modulenames,function(){
-          //console.log('CALLBACK',callback,arguments);
           var ret=callback.apply(null,arguments);
           Sorcery.required[modulename]=ret;
-          //console.log('DEFINED',modulename,ret);
         });
         delete this.requiring[modulepath];
       }
-    },
+    };
     
-    required : [],
+    exports={
+        Sorcery:GLOBAL.Sorcery,
+    };
     
-    requiring : []
-    
-  };
-
-  exports={
-      Sorcery:GLOBAL.Sorcery,
-  };
+  }
+  else {
+    Sorcery.environment = Sorcery.ENVIRONMENT_WEB;
+  }
   
+    
 };
-
-// INIT STUFF
-
-

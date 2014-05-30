@@ -11,4 +11,3 @@ Sorcery.define([],function(){
   };
   return cls;
 });
-

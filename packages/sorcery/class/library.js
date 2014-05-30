@@ -4,7 +4,7 @@ Sorcery.define([
   
   return Class.extend({
     
-    module_type : 'service',
+    
     
   });
   

@@ -1,0 +1,12 @@
+List of publicly available Sorcery methods:
+
+Sorcery.require(dependables,callback)
+	similar to RequireJS's require()
+Sorcery.define(dependable,callback)
+	similar to RequireJS's define()
+
+Sorcery.require_environment(environment)
+	ensures specific environment - Sorcery.ENVIRONMENT_CLI or Sorcery.ENVIRONMENT_WEB
+	throws error if environment is wrong
+	needed for cli-only and web-only services
+
