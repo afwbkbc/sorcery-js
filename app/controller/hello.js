@@ -24,6 +24,20 @@ Sorcery.define([
           console.log('HI '+name+'!');
         }
       });
+
+      Router.route({
+        name : 'helloplus',
+        pattern : 'hello/:a/:b/:c/:name',
+        defaults : {
+          a : 'A',
+          b : 'B',
+          c : 'C',
+          name : 'guest',
+        },
+        handler : function(a,b,c,name) {
+          console.log('HELLO!!! ',a,b,c,name);
+        }
+      })
       
     }
   

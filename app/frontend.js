@@ -18,7 +18,7 @@ Sorcery.initialize(function(){
       }),
     ];
     
-    console.log('URL',urls);
+    //console.log('URL',urls);
     
   });
   

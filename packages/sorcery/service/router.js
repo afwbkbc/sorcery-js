@@ -15,6 +15,15 @@ Sorcery.define([
         }
       }
       
+      var currenturl=window.location.pathname;
+      var match=this.match_path(currenturl);
+      
+      if (match===null) {
+        // 404
+      }
+      else {
+        match.route.handler.apply(null,match.args);
+      }
       
     },
     
@@ -47,6 +56,61 @@ Sorcery.define([
         }
       }
       throw new Error('Route "'+name+'" does not exist!');
+    },
+    
+    // TODO: optimize
+    match_path : function(url) {
+      if (url[0]==='/')
+        url=url.substring(1);
+      for (var i in this.routes) {
+        var route=this.routes[i];
+        var pattern=route.pattern;
+        var args=[];
+        
+        var rarr=pattern.split('/');
+        var uarr=url.split('/');
+        
+        if (uarr.length>rarr.length)
+          continue;
+        
+        var match=true;
+        
+        while (rarr.length) {
+          var rv=rarr[0];
+          rarr=rarr.splice(1);
+          if (!uarr.length) {
+            if ((rv[0]===':')&&((typeof(route.defaults)!=='undefined')&&(typeof(route.defaults[rv.substring(1)])!=='undefined'))) {
+              uarr.push(route.defaults[rv.substring(1)]);
+            }
+            else {
+              match=false;
+              break;
+            }
+          }
+          var uv=uarr[0];
+          uarr=uarr.splice(1);
+          if (rv[0]===':')
+            args.push(uv);
+          else if (rv!=uv) {
+            match=false;
+            break;
+          }
+        }
+        
+        if (match) {
+          return {
+            route:route,
+            args:args,
+          };
+          //console.log('MATCH',pattern,url,args);
+        }
+        
+      }
+      return null;
+    },
+    
+    handle_route : function(route, parameters) {
+      
     },
     
   });

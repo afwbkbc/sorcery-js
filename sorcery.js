@@ -157,7 +157,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                throw new Error('Unable to load fetcher, terminating application.');
           }
         };
-        xmlhttp.open('GET', 'packages/sorcery/'+path+'.js', true);
+        xmlhttp.open('GET', '/packages/sorcery/'+path+'.js', true);
         xmlhttp.send();
       };
       dirtyfetch('class/class',function(){
@@ -165,7 +165,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           dirtyfetch('library/fetcher',function(){
             var Fetcher=Sorcery.required['library/fetcher'];
             
-            Fetcher.get_file('cache.js',function(content){
+            Fetcher.get_file('/cache.js',function(content){
               
               dirtyjs(content);
               
@@ -202,7 +202,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   else path='./';
                   if (typeof(Sorcery.requiring[modulename])==='undefined') {
                     Sorcery.requiring[modulename]=true;
-                    Fetcher.get_file(path+modulename+'.js',function(content){
+                    Fetcher.get_file('/'+path+modulename+'.js',function(content){
                       dirtyjs('Sorcery.require_stack.push(\''+modulename+'\'); '+content);
                       return success(null);
                     },function(){
