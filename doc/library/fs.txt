@@ -1,0 +1,4 @@
+provides file-system-related methods (only in cli mode)
+
+Fs.list_directory(path)
+	returns array of files in directory, excluding . and ..

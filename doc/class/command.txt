@@ -2,3 +2,5 @@ represents cli runnable command
 
 every command must implement run(parameters) method
 	parameters will hold parameters passed, both key-based and indexed-based starting from 0 (0 will keep name of current command)
+
+commands must reside in command/ directory, because console.js looks for them there

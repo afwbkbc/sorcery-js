@@ -10,7 +10,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     required : [],
   
     requiring : [],
-  
+
+    get_require_paths : function() {
+      var look_in=['./','./app/','./packages/'];
+      for (var i in this.packages)
+        look_in.push('./packages/'+this.packages[i]+'/');
+      return look_in;
+    },
+    
     require_environment : function(desired_environment) {
       if (this.environment!=desired_environment)
         throw new Error('This routine requires "'+desired_environment+'" environment, but "'+this.environment+'" is active!');
@@ -25,9 +32,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     Sorcery.require = function(modulenames,callback) {
       if (typeof(modulenames)==='string')
         modulenames=[modulenames];
-      var look_in=['./app/','./packages/'];
-      for (var i in this.packages)
-        look_in.push('./packages/'+this.packages[i]+'/');
+      var look_in=this.get_require_paths();
       var collectedmodules=[];
       var self=this;
       var innerloop=function() {

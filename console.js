@@ -17,6 +17,7 @@ Sorcery.require([
     Sorcery.require('command/'+command,function(Command){
       loaded=true;
       Command.run(Cli.get_parameters());
+      Cli.print('\n');
     });
   } catch (e) {
     if (!loaded) {
