@@ -4,7 +4,7 @@ Sorcery.initialize(function(){
     'service/router',
   ],function(Router){
     
-    console.log('HERE',Router,(new Error).stack);
+    
     
     //Router.initialize();
     

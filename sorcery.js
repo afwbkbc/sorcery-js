@@ -159,9 +159,12 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   if (tofetch<1) {
                     if (isready)
                       return callback.apply(null,modules);
-                    else setTimeout(function(){
-                      Sorcery.require(modulenames,callback);
-                    },10);
+                    else {
+                      setTimeout(function(){
+                        Sorcery.require(modulenames,callback);
+                      },10);
+                      console.log('retry');
+                    }
                   }
                 };
                 var fetchfunc=function(modulename) {
@@ -194,9 +197,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               Sorcery.define = function(modulenames,callback) {
                 var modulename=Sorcery.require_stack.pop();
                 return Sorcery.require(modulenames,function(){
-                  var ret=callback.apply(null,arguments);
-                  Sorcery.required[modulename]=ret;
-                  //return ret;
+                  Sorcery.required[modulename]=callback.apply(null,arguments);
+                  delete Sorcery.requiring[modulename];
                 });
               };
               
