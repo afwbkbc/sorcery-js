@@ -2,9 +2,9 @@ require('./core/backend');
 
 Sorcery.require([
   'service/cli',
-  'service/test',
-],function(Cli,Test){
-  console.log('REQUIRED',Cli,Test);
+  //'service/test',
+],function(Cli){
+  Cli.initialize();
 });
 
 /*var args = process.argv.splice(2);

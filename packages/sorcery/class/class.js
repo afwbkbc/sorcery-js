@@ -1,8 +1,14 @@
 Sorcery.define([],function(){
-  var cls=function() {
-    console.log('CLSFUNC');
+  var cls={
+      extend : function(additional) {
+        var ret=additional;
+        for (var i in this) {
+          if (typeof(ret[i])==='undefined')
+            ret[i]=this[i];
+        }
+        return ret;
+      }
   };
-  //console.log('CLASS',cls);
   return cls;
 });
 

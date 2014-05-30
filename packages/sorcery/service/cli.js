@@ -1,8 +1,14 @@
 Sorcery.define([
   'class/service',
 ],function(Service){
-  var cli=function(){
-    console.log('CLIFUNC');
-  };
-  return cli;
+  return Service.extend({
+
+    service_name : 'cli',
+    
+    initialize : function() {
+      console.log('cli initialized');
+    }
+    
+  });
+  
 });
