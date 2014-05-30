@@ -142,45 +142,61 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               
               dirtyjs(content);
               
+              Sorcery.require_stack=[];
+              
+              Sorcery.requiring=[];
+              
               Sorcery.require = function(modulenames,callback) {
                 if (typeof(modulenames)==='string')
                   modulenames=[modulenames];
                 var tofetch=modulenames.length;
+                var isready=true;
                 var modules=[];
-                var success=function(index,module) {
-                  modules[index]=module;
+                var success=function(module) {
+                  if (module!==null)
+                    modules.push(module);
                   tofetch--;
                   if (tofetch<1) {
-                    return callback.apply(null,modules);
+                    if (isready)
+                      return callback.apply(null,modules);
+                    else setTimeout(function(){
+                      Sorcery.require(modulenames,callback);
+                    },10);
                   }
                 };
-                var fetchfunc=function(index,modulename) {
+                var fetchfunc=function(modulename) {
+                  isready=false;
                   var path=null;
                   if (typeof(Sorcery.path_cache[modulename])!=='undefined')
                     path=Sorcery.path_cache[modulename];
                   else path='./';
-                  Fetcher.get_file(path+modulename+'.js',function(content){
-                    dirtyjs('var _sorcery_require_module_name=\''+modulename+'\'; '+content);
-                    return success(index,Sorcery.required[modulename]);
-                  },function(){
-                    throw new Error('Unable to load module "'+modulename+'"!');
-                  });
+                  if (typeof(Sorcery.requiring[modulename])==='undefined') {
+                    Sorcery.requiring[modulename]=true;
+                    Fetcher.get_file(path+modulename+'.js',function(content){
+                      dirtyjs('Sorcery.require_stack.push(\''+modulename+'\'); '+content);
+                      return success(null);
+                    },function(){
+                      throw new Error('Unable to load module "'+modulename+'"!');
+                    });
+                  }
+                  else
+                    return success(null);
                 };
                 for (var i in modulenames) {
                   var modulename=modulenames[i];
                   if (typeof(Sorcery.required[modulename])!=='undefined')
-                    success(i,Sorcery.required[modulename]);
+                    success(Sorcery.required[modulename]);
                   else
-                    fetchfunc(i,modulename);
+                    fetchfunc(modulename);
                 }
               };
               
               Sorcery.define = function(modulenames,callback) {
+                var modulename=Sorcery.require_stack.pop();
                 return Sorcery.require(modulenames,function(){
                   var ret=callback.apply(null,arguments);
-                  Sorcery.required[_sorcery_require_module_name]=ret;
-                  delete _sorcery_require_module_name;
-                  return ret;
+                  Sorcery.required[modulename]=ret;
+                  //return ret;
                 });
               };
               
