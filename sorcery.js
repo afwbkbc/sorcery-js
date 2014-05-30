@@ -163,7 +163,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                       setTimeout(function(){
                         Sorcery.require(modulenames,callback);
                       },10);
-                      console.log('retry');
                     }
                   }
                 };
