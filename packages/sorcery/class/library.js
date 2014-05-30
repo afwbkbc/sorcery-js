@@ -3,7 +3,7 @@ Sorcery.define([
 ],function(Class){
   return Class.extend({
     
-    
+    class_name : 'library',
     
   });
   

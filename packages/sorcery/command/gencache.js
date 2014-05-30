@@ -10,15 +10,19 @@ Sorcery.define([
       
       // parse bundles and generate path cache
       var pathcache={};
-      var paths=Sorcery.get_require_paths().splice(1);
+      var paths=Sorcery.get_require_paths();
       for (var i in paths) {
         var path=paths[i];
         var files=Fs.list_directory_recursive(path);
         for (var ii in files) {
           var f=files[ii].substring(path.length+1);
-          f=f.substring(0,f.length-3);
-          if (typeof(pathcache[f])==='undefined')
-            pathcache[f]=path;
+          if (f.length>3) {
+            if (f.indexOf('\.js')===f.length-3) {
+              f=f.substring(0,f.length-3);
+              if (typeof(pathcache[f])==='undefined')
+                pathcache[f]=path;
+            }
+          }
         }
       }
       
