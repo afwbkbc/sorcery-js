@@ -1,5 +1,9 @@
 List of publicly available Sorcery methods:
 
+Sorcery.initialize(callback)
+	must be called prior to any use of Sorcery, usually right after including sorcery.js
+	all Sorcery-related code must reside in callback
+
 Sorcery.require(dependables,callback)
 	similar to RequireJS's require()
 Sorcery.define(dependable,callback)

@@ -35,7 +35,7 @@ Sorcery.define([
     },
     
     description : function() {
-      return 'Lists all available commands';
+      return 'list all available commands';
     },
     
   });

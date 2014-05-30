@@ -1,0 +1,10 @@
+Sorcery.initialize(function(){
+  Sorcery.require([
+    'library/fetcher',
+    'library/test',
+    'library/test2',
+    'library/test3',
+  ],function(Fetcher,Test,Test2,Test3){
+    console.log('RUN!',Fetcher,Test,Test2,Test3);
+  });
+});
