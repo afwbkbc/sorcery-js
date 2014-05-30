@@ -14,6 +14,8 @@ Sorcery.define([
         },
         handler : function(name) {
           console.log('HELLO '+name+'!');
+          
+          document.body.innerHTML='<a href="'+Router.generate('root')+'">HOME</a>';
         }
       });
       
@@ -22,23 +24,11 @@ Sorcery.define([
         pattern : 'hi/:name',
         handler : function(name) {
           console.log('HI '+name+'!');
+
+          document.body.innerHTML='<a href="'+Router.generate('hello')+'">HELLO GUEST</a>';
         }
       });
 
-      Router.route({
-        name : 'helloplus',
-        pattern : 'hello/:a/:b/:c/:name',
-        defaults : {
-          a : 'A',
-          b : 'B',
-          c : 'C',
-          name : 'guest',
-        },
-        handler : function(a,b,c,name) {
-          console.log('HELLO!!! ',a,b,c,name);
-        }
-      })
-      
     }
   
   });
