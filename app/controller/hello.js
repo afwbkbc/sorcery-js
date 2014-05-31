@@ -5,8 +5,7 @@ Sorcery.define([
   return Controller.extend({
   
     register : function(Router) {
-  
-      Router.route({
+        Router.route({
         name : 'hello',
         pattern : 'hello/:name',
         defaults : {

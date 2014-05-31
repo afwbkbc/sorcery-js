@@ -25,5 +25,24 @@ Sorcery.define([
       xmlhttp.send();
     },
     
+    jscache : {},
+    
+    get_js : function(path,success,error) {
+      
+      var script = document.createElement('script');
+      script.src=path;
+      script.onload=function(e){
+        if (typeof(success)==='function')
+          return success();
+      };
+      script.onerror=function(e){
+        if (typeof(error)==='function')
+          return error();
+      };
+      document.body.appendChild(script);
+      return script;
+      
+    },
+    
   });
 });

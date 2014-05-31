@@ -159,7 +159,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         dirtyfetch('library/fetcher',function(){
           var Fetcher=Sorcery.required['library/fetcher'];
           
-          Fetcher.get_file('/cache.js',function(content){
+          Fetcher.get_js('/cache.js',function(content){
             
             dirtyjs(content);
             
@@ -196,12 +196,12 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                 else path='./';
                 if (typeof(Sorcery.requiring[modulename])==='undefined') {
                   Sorcery.requiring[modulename]=true;
-                  Fetcher.get_file('/'+path+modulename+'.js',function(content){
-                    dirtyjs('Sorcery.require_stack.push(\''+modulename+'\'); '+content);
+                  Fetcher.get_js('/'+path+modulename+'.js',function(content){
+                    //dirtyjs('Sorcery.require_stack.push(\''+modulename+'\'); '+content);
                     return success(null);
                   },function(){
                     throw new Error('Unable to load module "'+modulename+'"!');
-                  });
+                  }).setAttribute('data-module',modulename);
                 }
                 else
                   return success(null);
@@ -214,18 +214,45 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   fetchfunc(modulename);
               }
             };
+
+            Sorcery.last_required=null;
             
             Sorcery.define = function(modulenames,callback) {
-              var modulename=Sorcery.require_stack.pop();
+              
+              var modulename=null;
+              
+              // TODO: test cross-browser reliability
+              var e=new Error;
+              var s=e.stack;
+              var lp=s.lastIndexOf('@');
+              if (lp<0)
+                throw new Error('internal error: @ not found in stack!');
+              s=s.substring(lp+1);
+              lp=s.lastIndexOf(':');
+              if (lp>=0)
+                s=s.substring(0,lp);
+              var scripts=document.getElementsByTagName('SCRIPT');
+              for (var i in scripts) {
+                var si=scripts[i];
+                if (si.src==s) {
+                  modulename=si.getAttribute('data-module');
+                  if (!modulename)
+                    throw new Error('internal error: missing data-module');
+                  break;
+                }
+              }
+              
+              if (modulename===null) {
+                throw new Error('internal error: script element not found');
+              }
+              
               return Sorcery.require(modulenames,function(){
                 Sorcery.required[modulename]=callback.apply(null,arguments);
                 delete Sorcery.requiring[modulename];
               });
             };
             
-            Fetcher.get_file('/app/frontend.js',function(content){
-              dirtyjs(content);
-            });
+            Fetcher.get_js('/app/frontend.js');
             
           },function(){
             throw new Error('Unable to load Sorcery cache!');
