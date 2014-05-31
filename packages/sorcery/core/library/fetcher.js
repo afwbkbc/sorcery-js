@@ -25,9 +25,14 @@ Sorcery.define([
       xmlhttp.send();
     },
     
-    jscache : {},
+    js_loaded : {},
     
     get_js : function(path,success,error) {
+      
+      if (typeof(this.js_loaded[path])!=='undefined')
+        return;
+      
+      this.js_loaded[path]=true;
       
       var script = document.createElement('script');
       script.src=path;

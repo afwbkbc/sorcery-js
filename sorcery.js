@@ -197,7 +197,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                 if (typeof(Sorcery.requiring[modulename])==='undefined') {
                   Sorcery.requiring[modulename]=true;
                   Fetcher.get_js('/'+path+modulename+'.js',function(content){
-                    //dirtyjs('Sorcery.require_stack.push(\''+modulename+'\'); '+content);
                     return success(null);
                   },function(){
                     throw new Error('Unable to load module "'+modulename+'"!');
@@ -219,32 +218,60 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             
             Sorcery.define = function(modulenames,callback) {
               
-              var modulename=null;
+              var scriptel=null;
               
-              // TODO: test cross-browser reliability
-              var e=new Error;
-              var s=e.stack;
-              var lp=s.lastIndexOf('@');
-              if (lp<0)
-                throw new Error('internal error: @ not found in stack!');
-              s=s.substring(lp+1);
-              lp=s.lastIndexOf(':');
-              if (lp>=0)
-                s=s.substring(0,lp);
-              var scripts=document.getElementsByTagName('SCRIPT');
-              for (var i in scripts) {
-                var si=scripts[i];
-                if (si.src==s) {
-                  modulename=si.getAttribute('data-module');
-                  if (!modulename)
-                    throw new Error('internal error: missing data-module');
-                  break;
+              if (typeof(document.currentScript)!=='undefined')
+                scriptel=document.currentScript; // the easy way with proper browsers
+              else { // ugly workaround for ie and some webkits
+              
+                var e=new Error;
+                var s=e.stack;
+                
+                if (typeof(s)==='undefined') { // IE
+                  try {
+                    throw e;
+                  } catch(e) {
+                    s=e.stack;
+                  }
+                }
+                
+                var lp=s.lastIndexOf('@'); // firefox
+                if (lp<0) {
+                  lp=s.lastIndexOf(' at '); // chrome or IE
+                  if (lp<0)
+                    throw new Error('internal error: neither @ nor "at " found in .stack!');
+                  s=s.substring(lp+4);
+                  lp=s.indexOf('(');
+                  if (lp>=0) { // IE
+                    s=s.substring(lp+1);
+                  }
+                }
+                else
+                  s=s.substring(lp+1);
+                lp=s.lastIndexOf(':');
+                if (lp>=0) {
+                  s=s.substring(0,lp);
+                  lp=s.lastIndexOf(':');
+                  if (lp>s.length-7)
+                    s=s.substring(0,lp);
+                }
+                
+                var scripts=document.getElementsByTagName('SCRIPT');
+                for (var i in scripts) {
+                  var si=scripts[i];
+                  if (si.src==s) {
+                    scriptel=si;
+                    break;
+                  };
                 }
               }
               
-              if (modulename===null) {
+              if (scriptel===null)
                 throw new Error('internal error: script element not found');
-              }
+              
+              var modulename=scriptel.getAttribute('data-module');
+              if (!modulename)
+                throw new Error('internal error: module name not defined in script tag');
               
               return Sorcery.require(modulenames,function(){
                 Sorcery.required[modulename]=callback.apply(null,arguments);
