@@ -200,9 +200,12 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       if (!s)
         throw new Error('invalid sid, duplicate Sorcery.end() ?');
       Sorcery.call_stack[sid]=null;
-      //console.log('END',s);
-      if (typeof(s.callback)==='function')
-        return s.callback();
+      if (typeof(s.callback)==='function') {
+        var args=[];
+        for (var i=1;i<arguments.length;i++)
+          args.push(arguments[i]);
+        return s.callback.apply(this,args);
+      }
     }
     
   };
@@ -281,7 +284,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     var dirtyjs = function(jscode) {
       var script = document.createElement('script');
       script.innerHTML=jscode;
-      document.body.appendChild(script);
+      document.head.appendChild(script);
     };
     
     var dirtyfetch = function(path,callback) {
@@ -303,6 +306,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       dirtyfetch('class/service',function(){
         dirtyfetch('service/fetcher',function(){
           var Fetcher=Sorcery.required['service/fetcher'];
+
+          Fetcher.js_loaded['class/class']=true;
+          Fetcher.js_loaded['class/service']=true;
+          Fetcher.js_loaded['class/fetcher']=true;
           
           Fetcher.get_js('/cache.js',function(content){
             
@@ -315,6 +322,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             Sorcery.require = function(modulenames,callback) {
               
               // TODO: check where modules reside
+              
+              if (!modulenames.length)
+                return callback.apply(null);
               
               modulenames=Sorcery.require_preparse(modulenames);
               
@@ -364,6 +374,11 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             Sorcery.last_required=null;
             
             Sorcery.define = function(modulenames,callback) {
+              
+              if (typeof(modulenames)==='function') {
+                callback=modulenames;
+                modulenames=[];
+              }
               
               var scriptel=null;
               

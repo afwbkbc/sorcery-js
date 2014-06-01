@@ -1,7 +1,8 @@
 Sorcery.define([
   'class/command',
   'service/fs',
-],function(Command,Fs){
+  'service/cli',
+],function(Command,Fs,Cli){
   
   return Command.extend({
     
@@ -28,8 +29,10 @@ Sorcery.define([
                 var flel=fl-el;
                 if ((ei>=0)&&(ei===flel)) {
                   f=f.substring(0,flel);
-                  if (typeof(pathcache[f])==='undefined')
+                  if (typeof(pathcache[f])==='undefined') {
+                    Cli.print(ext.substring(1).toUpperCase()+' '+path+f+ext+'\n');
                     pathcache[f]=path;
+                  }
                 }
               }
             }

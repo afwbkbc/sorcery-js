@@ -6,23 +6,49 @@ Sorcery.define([
   
   return Service.extend({
     
+    file_cache : {},
+    fetch_queue : {},
+    
     get_file : function(path,success,error) {
+      //console.log('GET FILE',path,success,error);
+      if (typeof(this.file_cache[path])!=='undefined')
+        return success(this.file_cache[path]);
       
-      var xmlhttp=new XMLHttpRequest();
-      xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == 4 ) {
-           if (xmlhttp.status == 200) {
-             if (typeof(success)==='function')
-               return success(xmlhttp.responseText);
-           }
-           else { 
-             if (typeof(error)==='function')
-               return error();
-           }
-        }
-      };
-      xmlhttp.open('GET', path, true);
-      xmlhttp.send();
+      if (typeof(this.fetch_queue[path])==='undefined') {
+        this.fetch_queue[path]=[];
+        var self=this;
+        
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+          if (xmlhttp.readyState == 4 ) {
+             if (xmlhttp.status == 200) {
+               var ret=xmlhttp.responseText;
+               self.file_cache[path]=ret;
+               for (var i in self.fetch_queue[path]) {
+                 var q=self.fetch_queue[path][i];
+                 if (typeof(q.success)==='function')
+                   q.success(ret);
+               }
+               delete self.fetch_queue[path];
+             }
+             else {
+               for (var i in self.fetch_queue[path]) {
+                 var q=self.fetch_queue[path][i];
+                 if (typeof(q.error)==='function')
+                   q.error();
+               }
+               delete self.fetch_queue[path];
+             }
+          }
+        };
+        xmlhttp.open('GET', path, true);
+        xmlhttp.send();
+      }
+      
+      this.fetch_queue[path].push({
+        success:success,
+        error:error,
+      });
     },
     
     js_loaded : {},
@@ -44,7 +70,7 @@ Sorcery.define([
         if (typeof(error)==='function')
           return error();
       };
-      document.body.appendChild(script);
+      document.head.appendChild(script);
       return script;
       
     },

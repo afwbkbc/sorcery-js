@@ -34,7 +34,6 @@ Sorcery.define([
           else {
             if (element.target==='')
               element.target='_blank';
-            console.log('ABSURL',url,element);
             return true;
           }
         }
