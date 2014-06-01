@@ -15,9 +15,9 @@ Sorcery.define([
         pattern : '',
         handler : function() {
           
-          Sorcery.construct(LayoutView,function(v1){
+          Sorcery.construct(LayoutView,'my1','xcvxvc',function(v1){
             
-            Sorcery.construct(LayoutView,function(v2){
+            Sorcery.construct(LayoutView,'my2',function(v2){
           
               console.log('V',v1,v2);
               
@@ -29,9 +29,9 @@ Sorcery.define([
                 
               },1,1);
           
-            },'my2');
+            });
             
-          },'my1');
+          });
 
           /*console.log('ROOT!');
           

@@ -6,16 +6,22 @@ Sorcery.define([
     
     my:'my',
     
-    construct : function(done,newmy) {
+    construct : Sorcery.method(function(newmy) {
+      var sid=Sorcery.begin();
+      
       console.log('CONSTRUCT',newmy);
       this.my=newmy;
-      return done();
-    },
+      
+      return Sorcery.end(sid);
+    }),
     
-    destroy : function(done,a,b) {
+    destroy : Sorcery.method(function(a,b) {
+      var sid=Sorcery.begin();
+      
       console.log('DESTROY',a,b);
-      return done();
-    }
+      
+      return Sorcery.end(sid);
+    })
     
   });
   

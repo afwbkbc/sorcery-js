@@ -6,15 +6,21 @@ Sorcery.define([
   
   return Class.extend({
 
-    construct : function(done) {
-      console.log('PARENT CONSTRUCT');
-      return done();
-    },
+    construct : Sorcery.method(function(me) {
+      var sid=Sorcery.begin();
+      
+      console.log('PARENT CONSTRUCT',me);
+      
+      return Sorcery.end(sid);
+    }),
     
-    destroy : function(done) {
+    destroy : Sorcery.method(function() {
+      var sid=Sorcery.begin();
+      
       console.log('PARENT DESTROY');
-      return done();
-    }
+      
+      return Sorcery.end(sid);
+    })
     
   });
 });

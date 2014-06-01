@@ -88,7 +88,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           return next_func();
         else {
           var na=args.slice();
-          na.unshift(next_func);
+          na.push(next_func);
           cb.apply(obj,na);
         }
       };
@@ -105,7 +105,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       this.apply_chain(obj,method,chain,callback,args);
     },
     
-    construct : function(classobj,callback) {
+    construct : function(classobj) {
       var newobj={};
       for (var i in classobj) {
         newobj[i]=classobj[i];
@@ -113,8 +113,12 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       
       if (typeof(newobj.construct)==='function') {
         var args=[];
-        for (var i=2;i<arguments.length;i++)
+        for (var i=1;i<arguments.length;i++)
           args.push(arguments[i]);
+        var callback;
+        if (typeof(args[args.length-1])==='function')
+          callback=args.pop();
+        else callback=null;
         Sorcery.apply_reverse(newobj,'construct',callback,args);
       }
       
@@ -134,6 +138,53 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             return callback();
         },args);
       }
+    },
+    
+    call_stack : [],
+    call_stack_last_id : null,
+    
+    method : function(func) {
+      return function() {
+        var args=[];
+        for (var i=0;i<arguments.length;i++)
+          args.push(arguments[i]);
+        var callback;
+        if (typeof(args[args.length-1])==='function')
+          callback=args.pop();
+        else callback=null;
+        var i=0;
+        while (Sorcery.call_stack[i]) i++;
+        Sorcery.call_stack[i]={
+          func:func,
+          arguments:args,
+          callback:callback,
+        };
+        Sorcery.call_stack_last_id=i;
+        
+        return func.apply(this,args);
+      };
+    },
+    
+    call : function(func) {
+      console.log('CALL',func);
+    },
+    
+    begin : function() {
+      var sid=Sorcery.call_stack_last_id;
+      if (sid===null)
+        throw new Error('failed to get sid, Sorcery.begin() called in wrong place or multiple times?');
+      Sorcery.call_stack_last_id=null;
+      return sid;
+    },
+    
+    end : function(sid) {
+      var s=Sorcery.call_stack[sid];
+      if (!s)
+        throw new Error('invalid sid, duplicate Sorcery.end() ?');
+      Sorcery.call_stack[sid]=null;
+      //console.log('END',s);
+      if (typeof(s.callback)==='function')
+        return s.callback();
     }
     
   };
