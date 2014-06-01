@@ -221,9 +221,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               var scriptel=null;
               
               if (typeof(document.currentScript)!=='undefined')
-                scriptel=document.currentScript; // the easy way with proper browsers
-              else { // ugly workaround for ie and some webkits
-              
+                scriptel=document.currentScript;
+              else { // ugly workaround for ie and older versions of browsers
+                
                 var e=new Error;
                 var s=e.stack;
                 
@@ -233,6 +233,11 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   } catch(e) {
                     s=e.stack;
                   }
+                }
+                
+                if (typeof(s)==='undefined') { // old safari
+                  // TODO: implement somehow
+                  throw new Error('this version of safari is not supported yet');
                 }
                 
                 var lp=s.lastIndexOf('@'); // firefox
