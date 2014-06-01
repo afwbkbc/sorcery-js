@@ -21,13 +21,13 @@ Sorcery.define([
           
               console.log('V',v1,v2);
               
-              Sorcery.destroy(v1,function(){
+              Sorcery.destroy(v1,'a1','a2',function(){
                 
-                Sorcery.destroy(v2,function(){
+                Sorcery.destroy(v2,'a1','a2',function(){
                   console.log('D',v1,v2);
-                },2,2);
+                });
                 
-              },1,1);
+              });
           
             });
             

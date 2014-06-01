@@ -9,7 +9,7 @@ Sorcery.define([
     construct : Sorcery.method(function(me) {
       var sid=Sorcery.begin();
       
-      console.log('PARENT CONSTRUCT',me);
+      console.log('PARENT CONSTRUCT',me,this);
       
       return Sorcery.end(sid);
     }),

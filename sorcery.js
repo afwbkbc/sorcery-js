@@ -125,11 +125,15 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return newobj;
     },
     
-    destroy : function(obj,callback) {
+    destroy : function(obj) {
       if (typeof(obj.destroy)==='function') {
         var args=[];
-        for (var i=2;i<arguments.length;i++)
+        for (var i=1;i<arguments.length;i++)
           args.push(arguments[i]);
+        var callback;
+        if (typeof(args[args.length-1])==='function')
+          callback=args.pop();
+        else callback=null;
         Sorcery.apply(obj,'destroy',function(){
           for (var i in obj) {
             delete obj[i];
@@ -407,6 +411,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               
               return Sorcery.require(modulenames,function(){
                 Sorcery.required[modulename]=callback.apply(null,arguments);
+                Sorcery.required[modulename].module_name=modulename;
                 delete Sorcery.requiring[modulename];
               });
             };
