@@ -1,9 +1,10 @@
 Sorcery.define([
   'class/class',
 ],function(Class){
+  
+  Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
+  
   return Class.extend({
-
-    view:'view',
 
     construct : function(done) {
       console.log('PARENT CONSTRUCT');

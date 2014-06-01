@@ -1,10 +1,10 @@
 Sorcery.define([
-  'class/library',
-],function(Library){
+  'class/service',
+],function(Service){
   
   Sorcery.require_environment(Sorcery.ENVIRONMENT_CLI);
   
-  var library=Library.extend({
+  var service=Service.extend({
 
     arguments : [],
     parameters : {},
@@ -37,14 +37,14 @@ Sorcery.define([
     
   });
   
-  library.node_path=process.argv[0];
-  library.app_path=process.argv[1];
-  library.arguments=process.argv.splice(2);
+  service.node_path=process.argv[0];
+  service.app_path=process.argv[1];
+  service.arguments=process.argv.splice(2);
   
   var paramindex=0;
   
-  for (var i in library.arguments) {
-    var a=library.arguments[i];
+  for (var i in service.arguments) {
+    var a=service.arguments[i];
     if (a.indexOf('--')===0) {
       a=a.substring(2);
       var v=null;
@@ -82,12 +82,12 @@ Sorcery.define([
         if (!isNaN(vnum))
           v=vnum;
       }
-      library.parameters[a]=v;
+      service.parameters[a]=v;
     }
     else
-      library.parameters[paramindex++]=a;
+      service.parameters[paramindex++]=a;
   }
   
-  return library;
+  return service;
   
 });

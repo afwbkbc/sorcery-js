@@ -1,7 +1,7 @@
 require('./sorcery');
 
 Sorcery.require([
-  'library/cli',
+  'service/cli',
 ],function(Cli){
   Cli.print('\n');
   var command=Cli.get_parameter(0);

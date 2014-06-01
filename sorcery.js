@@ -231,9 +231,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       xmlhttp.send();
     };
     dirtyfetch('class/class',function(){
-      dirtyfetch('class/library',function(){
-        dirtyfetch('library/fetcher',function(){
-          var Fetcher=Sorcery.required['library/fetcher'];
+      dirtyfetch('class/service',function(){
+        dirtyfetch('service/fetcher',function(){
+          var Fetcher=Sorcery.required['service/fetcher'];
           
           Fetcher.get_js('/cache.js',function(content){
             

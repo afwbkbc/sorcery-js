@@ -1,7 +1,7 @@
 Sorcery.define([
   'class/command',
-  'library/cli',
-  'library/fs',
+  'service/cli',
+  'service/fs',
 ],function(Command,Cli,Fs){
   
   return Command.extend({

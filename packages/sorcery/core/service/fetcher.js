@@ -1,10 +1,10 @@
 Sorcery.define([
-  'class/library',
-],function(Library){
+  'class/service',
+],function(Service){
   
   Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
   
-  return Library.extend({
+  return Service.extend({
     
     get_file : function(path,success,error) {
       
