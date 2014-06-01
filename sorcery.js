@@ -16,6 +16,11 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
     required : [],
   
+    template_engines : {
+      'twig':'.html.twig',
+      'static':'.html',
+    },
+    
     get_require_paths : function() {
       var look_in=['./','./app/','./packages/'];
       for (var i in this.packages)
@@ -32,6 +37,15 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       this.path_cache=path_cache;
     },
     
+    resolve_path : function(path,type) {
+      var pc=Sorcery.path_cache[type];
+      for (var ii in pc) {
+        if (path==ii)
+          return '/'+pc[ii]+path;
+      }
+      return null;
+    },
+    
     require_preparse : function(modulenames) {
       if (typeof(modulenames)==='string')
         modulenames=[modulenames];
@@ -43,7 +57,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         if (pos>=0) {
           var m1=modulename.substring(0,pos);
           var m2=modulename.substring(pos+1);
-          for (var ii in Sorcery.path_cache) {
+          for (var ii in Sorcery.path_cache.js) {
             var path=ii;
             if ((!m1.length)||(path.indexOf(m1)===0)) {
               var p=path.substring(m1.length);
@@ -300,6 +314,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             
             Sorcery.require = function(modulenames,callback) {
               
+              // TODO: check where modules reside
+              
               modulenames=Sorcery.require_preparse(modulenames);
               
               var tofetch=modulenames.length;
@@ -322,8 +338,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               var fetchfunc=function(modulename) {
                 isready=false;
                 var path=null;
-                if (typeof(Sorcery.path_cache[modulename])!=='undefined')
-                  path=Sorcery.path_cache[modulename];
+                if (typeof(Sorcery.path_cache.js[modulename])!=='undefined')
+                  path=Sorcery.path_cache.js[modulename];
                 else path='./';
                 if (typeof(Sorcery.requiring[modulename])==='undefined') {
                   Sorcery.requiring[modulename]=true;

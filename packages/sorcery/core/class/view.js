@@ -1,6 +1,10 @@
 Sorcery.define([
   'class/class',
-],function(Class){
+  'service/fetcher',
+],function(
+    Class,
+    Fetcher
+){
   
   Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
   
@@ -8,10 +12,43 @@ Sorcery.define([
 
     construct : Sorcery.method(function(me) {
       var sid=Sorcery.begin();
+
+      var self=this;
       
-      console.log('PARENT CONSTRUCT',me,this);
+      var init_html = function() {
       
-      return Sorcery.end(sid);
+        if (typeof(self.template)==='undefined')
+          self.template=self.module_name.replace('view/','template/');
+        
+        var engine=null;
+        
+        // TODO: make dynamic
+        var templatepath=null;
+        for (var i in Sorcery.template_engines) {
+          templatepath=Sorcery.resolve_path(self.template,i);
+          if (templatepath!==null) {
+            engine=i;
+            break;
+          }
+        }
+        if (templatepath===null)
+          throw new Error('unable to find template "'+self.template+'"');
+        else {
+          templatepath+=Sorcery.template_engines[engine];
+        }
+        
+        Fetcher.get_file(templatepath,function(content){
+          console.log('CONTENT',content);
+        });
+      };
+      
+      init_html();
+      
+      /*Fetcher.get_file('templates/'+this.template+'.html.twig',function(content){
+        console.log('CONTENT',content);
+        return Sorcery.end(sid);
+      });*/
+      
     }),
     
     destroy : Sorcery.method(function() {

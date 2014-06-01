@@ -4,21 +4,14 @@ Sorcery.define([
   
   return View.extend({
     
-    my:'my',
-    
-    construct : Sorcery.method(function(newmy) {
+    construct : Sorcery.method(function() {
       var sid=Sorcery.begin();
-      
-      console.log('CONSTRUCT',newmy);
-      this.my=newmy;
       
       return Sorcery.end(sid);
     }),
     
-    destroy : Sorcery.method(function(a,b) {
+    destroy : Sorcery.method(function() {
       var sid=Sorcery.begin();
-      
-      console.log('DESTROY',a,b);
       
       return Sorcery.end(sid);
     })
