@@ -60,6 +60,82 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       };
       return newmodulenames;
     },
+    
+    get_class_chain : function(obj) {
+      obj=obj.this_class;
+      var chain=[];
+      do {
+        chain.push(obj);
+        obj=obj.parent_class;
+      } while (obj);
+      return chain;
+    },
+    
+    apply_chain : function(obj,method,chain,callback,args) {
+      var next_func=function() {
+        chain=chain.splice(1);
+        if (chain.length)
+          return apply_func();
+        else {
+          if (typeof(callback)==='function')
+            return callback(obj);
+        }
+      };
+      var apply_func=function() {
+        var c=chain[0];
+        var cb=c[method];
+        if (typeof(cb)==='undefined')
+          return next_func();
+        else {
+          var na=args.slice();
+          na.unshift(next_func);
+          cb.apply(obj,na);
+        }
+      };
+      apply_func();
+    },
+    
+    apply : function(obj,method,callback,args) {
+      var chain=this.get_class_chain(obj);
+      this.apply_chain(obj,method,chain,callback,args);
+    },
+    
+    apply_reverse : function(obj,method,callback,args) {
+      var chain=this.get_class_chain(obj).reverse();
+      this.apply_chain(obj,method,chain,callback,args);
+    },
+    
+    construct : function(classobj,callback) {
+      var newobj={};
+      for (var i in classobj) {
+        newobj[i]=classobj[i];
+      }
+      
+      if (typeof(newobj.construct)==='function') {
+        var args=[];
+        for (var i=2;i<arguments.length;i++)
+          args.push(arguments[i]);
+        Sorcery.apply_reverse(newobj,'construct',callback,args);
+      }
+      
+      return newobj;
+    },
+    
+    destroy : function(obj,callback) {
+      if (typeof(obj.destroy)==='function') {
+        var args=[];
+        for (var i=2;i<arguments.length;i++)
+          args.push(arguments[i]);
+        Sorcery.apply(obj,'destroy',function(){
+          for (var i in obj) {
+            delete obj[i];
+          };
+          if (typeof(callback)==='function')
+            return callback();
+        },args);
+      }
+    }
+    
   };
   
   Sorcery=GLOBAL.Sorcery;
