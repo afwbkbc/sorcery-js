@@ -53,6 +53,7 @@ Sorcery.define([
         self.template_engine=null;
         
         var templatepath=null;
+        
         for (var i in Sorcery.template_engines) {
           templatepath=Sorcery.resolve_path(self.template,i);
           if (templatepath!==null) {
@@ -65,7 +66,7 @@ Sorcery.define([
         else {
           templatepath+=Sorcery.template_engines[self.template_engine];
         }
-        
+        console.log('T',templatepath);
         Fetcher.get_file(templatepath,function(content){
           self.template_data=content;
           final_func();
