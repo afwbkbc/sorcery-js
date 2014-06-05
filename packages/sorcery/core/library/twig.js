@@ -8,6 +8,7 @@
 
 /**
  * Tweaked for Sorcery.js compatibility
+ *   additional methods added: url path
  */
 
 var Twig = (function (Twig) {
@@ -4804,7 +4805,11 @@ var Twig = (function (Twig) {
 var Twig = (function (Twig) {
     "use strict";
     Twig.exports = {
-        VERSION: Twig.VERSION
+        VERSION: Twig.VERSION,
+        
+        PLACEHOLDERS:{
+          
+        }
     };
 
     /**
@@ -5046,6 +5051,13 @@ var Twig = (function (Twig) {
 // Provide a Sorcery.js module export.
 
 Sorcery.define([
-],function(){
+  'service/router'
+],function(Router){
+  
+  Twig.exports.extendFunction('path',function(route,params){
+    return Router.generate(route,params);
+  });
+  
+  Twig.extended=true;
   return Twig.exports;
 });
