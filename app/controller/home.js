@@ -19,14 +19,11 @@ Sorcery.define([
           
           c.set_views({
             template:'layout',
-            arguments:{
-              asd:'qwe',
-            },
             children:[
-              /*{
+              {
                 selector:'.test1',
                 template:'test/test1',
-              },*/
+              },
               {
                 selector:'.test2',
                 template:'test/test2',
@@ -46,13 +43,10 @@ Sorcery.define([
           
           c.set_views({
             template:'layout',
-            arguments:{
-              asd:'qwe',
-            },
             children:[
               {
                 selector:'.test2',
-                template:'test/test1',
+                template:'test/test2',
               }
             ],
           },function(){
