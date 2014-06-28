@@ -182,7 +182,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         return func.apply(this,args);
       };
     },
-    
+
     call : function(func) {
       console.log('CALL',func);
     },
@@ -206,6 +206,31 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           args.push(arguments[i]);
         return s.callback.apply(this,args);
       }
+    },
+    
+    loop : {
+      
+      for : function(init,condition,iterator,body,callback) {
+        var breakfunc=function(){
+          if (typeof(callback)==='function')
+            return callback();
+        };
+        var continuefunc=function(){
+          if ((typeof(condition)!=='function')||condition()) {
+            return body(function(){
+              if (typeof(iterator)==='function')
+                iterator();
+              return continuefunc();
+            },breakfunc);
+          }
+          else
+            return breakfunc();
+        };
+        if (typeof(init)==='function')
+          init();
+        continuefunc();
+      }
+      
     }
     
   };

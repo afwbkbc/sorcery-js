@@ -10,25 +10,52 @@ Sorcery.define([
     
     register : function(Router) {
 
+      var c=this;
+
       Router.route({
         name : 'root',
         pattern : '',
         handler : function() {
           
-          Sorcery.construct(LayoutView,document.body,function(v){
+          /*Sorcery.construct(LayoutView,document.body,function(v){
             
             v.render(function(){
               console.log('RENDERED');
             });
             
+          });*/
+          
+          c.set_views({
+            template:'layout',
+            children:[
+              {
+                selector:'.test1',
+                template:'test/test1',
+              },
+              {
+                selector:'.test2',
+                template:'test/test2',
+              }
+            ],
           });
 
-          /*document.body.innerHTML='<a href="'+Router.generate('hi',{
-            name:'michael',
-          })+'">HI</a>';
+        }
+      });
+      
+      Router.route({
+        name : 'testroute',
+        pattern : '/test/route',
+        handler : function() {
           
-          document.body.innerHTML+='<br /><a href="http://www.google.ru/">google</a>';*/
-          
+          c.set_views({
+            template:'layout',
+            children:[
+              {
+                selector:'.test2',
+                template:'test/test2',
+              }
+            ],
+          });
         }
       });
       

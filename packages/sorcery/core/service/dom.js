@@ -7,6 +7,11 @@ Sorcery.define([
   
   return Service.extend({
 
+    find : function(selector) {
+      var el=document.querySelector(selector);
+      return el;
+    },
+
     set_unique_attribute : Sorcery.method(function(element,attribute,prefix){
       var sid=Sorcery.begin();
       
@@ -18,6 +23,8 @@ Sorcery.define([
     }),
     
     get_unique_attribute : Sorcery.method(function(attribute,prefix){
+      var self=this;
+      
       var sid=Sorcery.begin();
       
       if (prefix)
@@ -27,7 +34,7 @@ Sorcery.define([
       var tryfunc=function(){
         Algorithms.get_random_ascii_string(16,function(value){
           value=prefix+value;
-          var chk=document.querySelector('['+attribute+'="'+value+'"]');
+          var chk=self.find('['+attribute+'="'+value+'"]');
           if (chk===null)
             Sorcery.end(sid,value);
           else return tryfunc();
