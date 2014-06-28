@@ -17,29 +17,23 @@ Sorcery.define([
         pattern : '',
         handler : function() {
           
-          /*Sorcery.construct(LayoutView,document.body,function(v){
-            
-            v.render(function(){
-              console.log('RENDERED');
-            });
-            
-          });*/
-          
           c.set_views({
             template:'layout',
             arguments:{
-              value:'val1',
+              asd:'qwe',
             },
             children:[
-              {
+              /*{
                 selector:'.test1',
                 template:'test/test1',
-              },
+              },*/
               {
                 selector:'.test2',
                 template:'test/test2',
               }
             ],
+          },function(){
+            console.log('SETVIEWS1 DONE');
           });
 
         }
@@ -53,14 +47,16 @@ Sorcery.define([
           c.set_views({
             template:'layout',
             arguments:{
-              value:'val2',
+              asd:'qwe',
             },
             children:[
               {
                 selector:'.test2',
-                template:'test/test2',
+                template:'test/test1',
               }
             ],
+          },function(){
+            console.log('SETVIEWS2 DONE');
           });
         }
       });

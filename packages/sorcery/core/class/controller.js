@@ -1,12 +1,10 @@
 Sorcery.define([
   'class/class',
   'service/globals',
-  'service/dom',
   'service/algorithms'
 ],function(
   Class,
   Globals,
-  Dom,
   Algorithms
 ){
   
@@ -20,9 +18,13 @@ Sorcery.define([
       // override it and add routes
     },
     
-    set_views : Sorcery.method(function(views,path) {
+    set_views : Sorcery.method(function(views,path,baseel) {
+
+      //console.log('SET_VIEWS',views,path,baseel);
       
       var sid=Sorcery.begin();
+      if (typeof(baseel)==='undefined')
+        baseel=document;
       
       if (typeof(views.length)==='undefined')
         views=[views];
@@ -30,7 +32,9 @@ Sorcery.define([
       if (typeof(path)==='undefined')
         path='';
       
-      var viewskey='views['+path+']';
+      var viewskey='views/'+path;
+      
+      var self=this;
       
       Globals.retrieve(viewskey,function(currentviews){
         if (currentviews===null)
@@ -42,13 +46,15 @@ Sorcery.define([
 
         var toadd=[];
         var toremove=[];
+        
+        var collectchildren=[];
 
         for (var i in views) {
           var view=views[i];
           var s=view.selector;
           if (typeof(s)==='undefined') {
             s='body > .container';
-            if (!Dom.find(s)) {
+            if (!baseel.querySelector(s)) {
               var container=document.createElement('div');
               container.className="container";
               document.body.appendChild(container);
@@ -62,18 +68,18 @@ Sorcery.define([
           collect.push({
             selector:s,
             template:t,
-            arguments:a,
+            arguments:a
           });
           
           var sameviews=function(v,vv){
             return (v.template===vv.template)&&(Algorithms.objects_equal(v.arguments,vv.arguments));
-          }
+          };
           
-          for (var i in currentviews) {
-            var v=currentviews[i];
+          for (var ii in currentviews) {
+            var v=currentviews[ii];
             var match=false;
-            for (var ii in collect) {
-              var vv=collect[ii];
+            for (var iii in collect) {
+              var vv=collect[iii];
               if (v.selector===vv.selector) {
                 if (sameviews(v,vv))
                   match=true;
@@ -81,27 +87,35 @@ Sorcery.define([
               }
             }
             if (!match)
-              toremove.push(i);
+              toremove.push(ii);
           }
-          for (var i in collect) {
-            var v=collect[i];
+          for (var ii in collect) {
+            var v=collect[ii];
             var match=false;
-            for (var ii in currentviews) {
-              var vv=currentviews[ii];
+            for (var iii in currentviews) {
+              var vv=currentviews[iii];
               if (v.selector===vv.selector) {
-                //console.log('CMPA',v,vv);
-                if (sameviews(v,vv))
+                if (sameviews(v,vv)) {
                   match=true;
+                  v.view=vv.view;
+                }
                 break;
               }
             }
             if (!match)
-              toadd.push(i);
+              toadd.push(ii);
+          }
+
+          if (view.children) {
+            collectchildren.push({
+              view:collect[collect.length-1],
+              children:view.children
+            });
           }
 
         }
 
-        //console.log('RA',toremove,toadd);
+        //console.log('RA',toremove,toadd,collect);
 
         var i;
         Sorcery.loop.for(
@@ -110,38 +124,57 @@ Sorcery.define([
           function(){ i++ },
           function(cont){
             var v=currentviews[i];
-            
-            Sorcery.destroy(v.view,function(){
-              //console.log('REMOVE',i,v);
-              cont();
-            });
-            
+            Sorcery.destroy(v.view,cont);
           },
           function(){
-            
+            var ii;
             Sorcery.loop.for(
-              function(){ i=0 },
-              function(){ return i<toadd.length },
-              function(){ i++ },
+              function(){ ii=0 },
+              function(){ return ii<toadd.length },
+              function(){ ii++ },
               function(cont){
-                var v=collect[i];
+                //console.log('COLLECT',ii,collect,collect[ii],toadd.length,toadd);
+                var v=collect[ii];
                 Sorcery.require('view/'+v.template,function(ViewTemplate){
-                  Sorcery.construct(ViewTemplate,Dom.find(v.selector),function(vo){
-                    collect[i].view=vo;
-                    vo.set(collect[i].arguments,function(){
-                      vo.render();
-                      cont();
+                  Sorcery.construct(ViewTemplate,baseel.querySelector(v.selector),function(vo){
+                    collect[ii].view=vo;
+                    vo.set(collect[ii].arguments,function(){
+                      vo.render(function(){
+                        cont();
+                      });
+                      
                     });
                   });
                 });
               },
               function(){
-                //console.log('UPDATE',currentviews,collect);
+                //console.log('UPDATE',viewskey,currentviews,collect);
 
                 Globals.store(viewskey,collect,function(){
                   
-                  return Sorcery.end(sid);
-
+                  var iii;
+                  Sorcery.loop.for(
+                    function(){ iii=0 },
+                    function(){ return iii<collectchildren.length },
+                    function(){ iii++ },
+                    function(cont) {
+                      var c=collectchildren[iii];
+                      if (typeof(c.view.view)!=='undefined') {
+                        var p=c.view.selector;
+                        if (path!=='')
+                          p=path+'/'+p;
+                        //console.log('PROCESS',p,c.view,c.children);
+                        self.set_views(c.children,p,c.view.view.el,cont);
+                      }
+                      else
+                        return cont();
+                    },
+                    function() {
+                      //console.log('DONE');
+                      return Sorcery.end(sid);
+                    }
+                  );
+                
                 });
               }
             );

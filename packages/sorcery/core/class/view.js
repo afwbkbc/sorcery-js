@@ -119,8 +119,6 @@ Sorcery.define([
       var self=this;
 
       var finalfunc=function(){
-        self.el.removeAttribute('data-view');
-        self.el.innerHTML='';
         return Sorcery.end(sid);
       }
 
@@ -139,7 +137,13 @@ Sorcery.define([
             // TODO
             cont();
           },
-          finalfunc
+          function(){
+            self.el.removeAttribute('data-view');
+            self.el.innerHTML='';
+            self.el=null;
+
+            return finalfunc();
+          }
         );
         
         

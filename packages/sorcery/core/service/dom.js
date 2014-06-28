@@ -7,11 +7,6 @@ Sorcery.define([
   
   return Service.extend({
 
-    find : function(selector) {
-      var el=document.querySelector(selector);
-      return el;
-    },
-
     set_unique_attribute : Sorcery.method(function(element,attribute,prefix){
       var sid=Sorcery.begin();
       
@@ -34,7 +29,7 @@ Sorcery.define([
       var tryfunc=function(){
         Algorithms.get_random_ascii_string(16,function(value){
           value=prefix+value;
-          var chk=self.find('['+attribute+'="'+value+'"]');
+          var chk=document.querySelector('['+attribute+'="'+value+'"]');
           if (chk===null)
             Sorcery.end(sid,value);
           else return tryfunc();
