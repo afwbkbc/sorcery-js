@@ -9,9 +9,6 @@ Sorcery.define([
     store : Sorcery.method(function(key,value){
       var sid=Sorcery.begin();
       
-      if (typeof(this.data[key])!=='undefined')
-        throw new Error('attempted to overwrite stored value, key "'+key+'"');
-      
       this.data[key]=value;
       
       Sorcery.end(sid);

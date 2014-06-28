@@ -25,10 +25,15 @@ Sorcery.define([
       document.onclick = function(e) {
         e = e || window.event;
         var element = e.target || e.srcElement;
-        if (element.tagName == 'A') {
+        if (element.tagName === 'A') {
           var url=element.getAttribute('href');
           if (url[0]==='/') {
-            self.redirect(url.substring(1));
+            try {
+              self.redirect(url.substring(1));
+            } catch (e) {
+              console.error(e);
+              return false;
+            }
             return false;
           }
           else {

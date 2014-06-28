@@ -27,16 +27,14 @@ Sorcery.define([
 
         if (viewel.getAttribute('data-view')!==null)
           throw new Error('duplicate view on single element');
-        
+
         Dom.set_unique_attribute(viewel,'data-view','view',function(id){
           
           self.id=id;
-          
           Globals.store(id,self,function(){
             
             self.el=viewel;
             //self.$el=jQuery(self.el);
-            
             Sorcery.end(sid);
             
           });
@@ -66,7 +64,7 @@ Sorcery.define([
         else {
           templatepath+=Sorcery.template_engines[self.template_engine];
         }
-        console.log('T',templatepath);
+        //console.log('T',templatepath);
         Fetcher.get_file(templatepath,function(content){
           self.template_data=content;
           final_func();
@@ -80,6 +78,16 @@ Sorcery.define([
         return Sorcery.end(sid);
       });*/
       
+    }),
+    
+    set : Sorcery.method(function(values) {
+      var sid=Sorcery.begin();
+      
+      for (var i in values) {
+        this.data[i]=values[i];
+      }
+      
+      return Sorcery.end(sid);
     }),
     
     render : Sorcery.method(function() {
@@ -107,10 +115,41 @@ Sorcery.define([
     
     destroy : Sorcery.method(function() {
       var sid=Sorcery.begin();
+
+      var self=this;
+
+      var finalfunc=function(){
+        self.el.removeAttribute('data-view');
+        self.el.innerHTML='';
+        return Sorcery.end(sid);
+      }
+
+      if (this.el) {
+
+        var subviewels=this.el.querySelectorAll('div[data-view]');
+        
+        // TODO: delete children
+        
+        var i;
+        Sorcery.loop.for(
+          function(){ i=0 },
+          function(){ return i<subviewels },
+          function(){ i++ },
+          function(cont) {
+            // TODO
+            cont();
+          },
+          finalfunc
+        );
+        
+        
+      }
+      else
+        return finalfunc();
+
+      //console.log('DESTROY',this);
       
-      console.log('PARENT DESTROY');
       
-      return Sorcery.end(sid);
     })
     
   });

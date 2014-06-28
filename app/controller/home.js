@@ -27,6 +27,9 @@ Sorcery.define([
           
           c.set_views({
             template:'layout',
+            arguments:{
+              value:'val1',
+            },
             children:[
               {
                 selector:'.test1',
@@ -44,11 +47,14 @@ Sorcery.define([
       
       Router.route({
         name : 'testroute',
-        pattern : '/test/route',
+        pattern : 'test/route',
         handler : function() {
           
           c.set_views({
             template:'layout',
+            arguments:{
+              value:'val2',
+            },
             children:[
               {
                 selector:'.test2',
