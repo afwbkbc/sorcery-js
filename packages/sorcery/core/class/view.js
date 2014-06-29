@@ -113,47 +113,90 @@ Sorcery.define([
       
     }),
     
-    destroy : Sorcery.method(function() {
+    remove_children : Sorcery.method(function(){
       var sid=Sorcery.begin();
-
       var self=this;
-
-      var finalfunc=function(){
-        return Sorcery.end(sid);
-      }
-
-      if (this.el) {
-
-        var subviewels=this.el.querySelectorAll('div[data-view]');
+      if (self.el) {
+        var els=self.el.querySelectorAll('[data-view]');
+        var childels=[];
+        for (var i in els) {
+          var el=els[i];
+          if (Dom.is_element(el)) {
+            var chk=el.parentNode;
+            while ((chk!==document)&&(chk!==null)) {
+              var a=chk.getAttribute('data-view');
+              if (a!==null) {
+                if (a===self.id) // only accept direct children
+                  childels.push(el);
+                break;
+              }
+              chk=chk.parentNode;
+            }
+          }
+        }
         
-        // TODO: delete children
+        //console.log('ELS',childels);
         
         var i;
         Sorcery.loop.for(
           function(){ i=0 },
-          function(){ return i<subviewels },
+          function(){ return i<childels.length },
           function(){ i++ },
-          function(cont) {
-            // TODO
-            cont();
+          function(cont){
+            var el=childels[i];
+            Globals.retrieve(el.getAttribute('data-view'),function(v){
+              //console.log('TRY',el,v,Globals);
+              if (typeof(v.remove)==='function') {
+                v.remove(function(){
+                  return cont();
+                });
+              }
+              else {
+                el.removeAttribute('data-view');
+                return cont();
+              }
+            });
           },
           function(){
-            self.el.removeAttribute('data-view');
-            self.el.innerHTML='';
-            self.el=null;
-
-            return finalfunc();
+            //console.log('ALL DONE');
+            return Sorcery.end(sid);
           }
         );
         
         
       }
       else
-        return finalfunc();
+        return Sorcery.end(sid);
+    }),
+    
+    remove : Sorcery.method(function(){
+      var sid=Sorcery.begin();
+      
+      var self=this;
+      //console.log('REMOVE',self);
+      this.remove_children(function(){
+        Sorcery.destroy(self,function(){
+          return Sorcery.end(sid);
+        });
+      });
+    }),
+    
+    destroy : Sorcery.method(function() {
+      var sid=Sorcery.begin();
 
-      //console.log('DESTROY',this);
-      
-      
+      var self=this;
+
+      this.remove_children(function(){
+        
+        if (self.el) {
+          self.el.innerHTML='';
+          self.el.removeAttribute('data-view');
+          self.el=null;
+        }
+        
+        return Sorcery.end(sid);
+      });
+
     })
     
   });

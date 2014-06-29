@@ -101,7 +101,7 @@ Sorcery.define([
                   //console.log('ASD',v,vv,sameviews(v,vv));
                   if (sameviews(v,vv)) {
                     if (typeof(v.view)!=='undefined') {
-                      if (!Dom.is_in_tree(v.view.el))
+                      if (v.view._destroyed||!Dom.is_in_tree(v.view.el))
                         break;
                     }
                     //console.log('keep',currentviews[ii]);
@@ -124,7 +124,7 @@ Sorcery.define([
                   //console.log('QWE',v,vv,sameviews(v,vv));
                   if (sameviews(v,vv)) {
                     if (typeof(vv.view)!=='undefined') {
-                      if (!Dom.is_in_tree(vv.view.el)) {
+                      if (vv.view._destroyed||!Dom.is_in_tree(vv.view.el)) {
                         break;
                       }
                     }
@@ -151,8 +151,9 @@ Sorcery.define([
               function(cont){
                 var k=toremove[i];
                 var v=currentviews[k];
-                //console.log('DESTROY',v,currentviews);
-                Sorcery.destroy(v.view,cont);
+                if (!v.view._destroyed)
+                  v.view.remove(cont);
+                else return cont();
               },
               function(){
                 var ii;

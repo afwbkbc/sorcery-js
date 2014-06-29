@@ -18,7 +18,7 @@ Sorcery.define([
           return {
             template:'layout',
             arguments:{
-              asd:'qwe'
+              asd:'qwe1'
             },
             children:[
               {
@@ -46,17 +46,17 @@ Sorcery.define([
           return {
             template:'layout',
             arguments:{
-              asd:'qwe'
+              asd:'qwe2'
             },
             children:[
               {
                 selector:'.test1',
                 template:'test/test1'
               },
-              /*{
+              {
                 selector:'.test2',
                 template:'test/test2'
-              }*/
+              }
             ]
           };
           

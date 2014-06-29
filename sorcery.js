@@ -152,6 +152,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           for (var i in obj) {
             delete obj[i];
           };
+          obj._destroyed=true;
           if (typeof(callback)==='function')
             return callback();
         },args);
