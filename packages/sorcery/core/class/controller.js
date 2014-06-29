@@ -1,11 +1,13 @@
 Sorcery.define([
   'class/class',
   'service/globals',
-  'service/algorithms'
+  'service/algorithms',
+  'service/dom'
 ],function(
   Class,
   Globals,
-  Algorithms
+  Algorithms,
+  Dom
 ){
   
   Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
@@ -55,6 +57,7 @@ Sorcery.define([
           function(){ i++ },
           function(cont) {
             var view=views[i];
+            //console.log('VIEW',view);
             var s=view.selector;
             if (typeof(s)==='undefined') {
               s='body > .container';
@@ -67,7 +70,7 @@ Sorcery.define([
             var t=view.template;
             var a=view.arguments;
             if (typeof(a)==='undefined')
-              a=[];
+              a={};
             var p=path+'/'+s;
             collect.push({
               selector:s,
@@ -85,8 +88,6 @@ Sorcery.define([
             return cont();
           },
           function(){
-            //console.log('RA',toremove,toadd,collect);
-
             var sameviews=function(v,vv){
               return (v.template===vv.template)&&(Algorithms.objects_equal(v.arguments,vv.arguments));
             };
@@ -97,13 +98,22 @@ Sorcery.define([
               for (var iii in collect) {
                 var vv=collect[iii];
                 if (v.selector===vv.selector) {
-                  if (sameviews(v,vv))
+                  //console.log('ASD',v,vv,sameviews(v,vv));
+                  if (sameviews(v,vv)) {
+                    if (typeof(v.view)!=='undefined') {
+                      if (!Dom.is_in_tree(v.view.el))
+                        break;
+                    }
+                    //console.log('keep',currentviews[ii]);
                     match=true;
+                  }
                   break;
                 }
               }
-              if (!match)
+              if (!match) {
+                //console.log('REMOVE',currentviews[ii]);
                 toremove.push(ii);
+              }
             }
             for (var ii in collect) {
               var v=collect[ii];
@@ -111,16 +121,27 @@ Sorcery.define([
               for (var iii in currentviews) {
                 var vv=currentviews[iii];
                 if (v.selector===vv.selector) {
+                  //console.log('QWE',v,vv,sameviews(v,vv));
                   if (sameviews(v,vv)) {
+                    if (typeof(vv.view)!=='undefined') {
+                      if (!Dom.is_in_tree(vv.view.el)) {
+                        break;
+                      }
+                    }
+                    //console.log('noadd',v);
                     match=true;
                     v.view=vv.view;
                   }
                   break;
                 }
               }
-              if (!match)
+              if (!match) {
+                //console.log('ADD',collect[ii]);
                 toadd.push(ii);
+              }
             }
+
+            //console.log('RA',toremove,toadd,collect,collectchildren);
 
             var i;
             Sorcery.loop.for(
@@ -128,7 +149,9 @@ Sorcery.define([
               function(){ return i<toremove.length },
               function(){ i++ },
               function(cont){
-                var v=currentviews[i];
+                var k=toremove[i];
+                var v=currentviews[k];
+                //console.log('DESTROY',v,currentviews);
                 Sorcery.destroy(v.view,cont);
               },
               function(){
@@ -139,11 +162,12 @@ Sorcery.define([
                   function(){ ii++ },
                   function(cont){
                     //console.log('COLLECT',ii,collect,collect[ii],toadd.length,toadd);
-                    var v=collect[ii];
+                    var k=toadd[ii];
+                    var v=collect[k];
                     Sorcery.require('view/'+v.template,function(ViewTemplate){
                       Sorcery.construct(ViewTemplate,baseel.querySelector(v.selector),function(vo){
-                        collect[ii].view=vo;
-                        vo.set(collect[ii].arguments,function(){
+                        collect[k].view=vo;
+                        vo.set(collect[k].arguments,function(){
                           vo.render(function(){
                             cont();
                           });

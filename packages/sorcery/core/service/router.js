@@ -1,6 +1,10 @@
 Sorcery.define([
   'class/service',
-],function(Service){
+  'class/controller'
+],function(
+  Service,
+  Controller
+){
   
   Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
   
@@ -90,7 +94,11 @@ Sorcery.define([
         // 404
       }
       else {
-        match.route.handler.apply(null,match.args);
+        var ret=match.route.handler.apply(null,match.args);
+        if ((typeof(ret)==='array')||(typeof(ret)==='object')) {
+          Controller.set_views(ret);
+          //console.log('R',ret);
+        }
       }
 
     },

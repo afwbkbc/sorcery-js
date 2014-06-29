@@ -10,28 +10,30 @@ Sorcery.define([
     
     register : function(Router) {
 
-      var c=this;
-
       Router.route({
         name : 'root',
         pattern : '',
         handler : function() {
           
-          c.set_views({
+          return {
             template:'layout',
+            arguments:{
+              asd:'qwe'
+            },
             children:[
               {
                 selector:'.test1',
-                template:'test/test1',
+                template:'test/test1'
               },
               {
                 selector:'.test2',
                 template:'test/test2',
+                arguments:{
+                  qwe:'zxc'
+                }
               }
-            ],
-          },function(){
-            console.log('SETVIEWS1 DONE');
-          });
+            ]
+          };
 
         }
       });
@@ -41,17 +43,23 @@ Sorcery.define([
         pattern : 'test/route',
         handler : function() {
           
-          c.set_views({
+          return {
             template:'layout',
+            arguments:{
+              asd:'qwe'
+            },
             children:[
               {
+                selector:'.test1',
+                template:'test/test1'
+              },
+              /*{
                 selector:'.test2',
-                template:'test/test2',
-              }
-            ],
-          },function(){
-            console.log('SETVIEWS2 DONE');
-          });
+                template:'test/test2'
+              }*/
+            ]
+          };
+          
         }
       });
       
