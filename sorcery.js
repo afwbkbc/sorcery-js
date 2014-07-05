@@ -244,13 +244,17 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         func:func,
         args:args
       });
+    },
+    
+    exit : function() {
+      clearInterval(this.async_poller);
     }
     
   };
   
   Sorcery=GLOBAL.Sorcery;
   
-  setInterval(function(){
+  Sorcery.async_poller=setInterval(function(){
     var q=Sorcery.async_queue[0];
     if (typeof(q)!=='undefined') {
       Sorcery.async_queue=Sorcery.async_queue.splice(1);
@@ -493,6 +497,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                 delete Sorcery.requiring[modulename];
               });
             };
+
+            
             
             Fetcher.get_js('/app/frontend.js');
             

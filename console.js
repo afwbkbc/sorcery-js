@@ -9,7 +9,7 @@ Sorcery.require([
   if (!command) {
     Cli.print('Usage: '+Cli.get_node_path()+' '+Cli.get_app_path()+' <command>\n');
     Cli.print(helpstring);
-    return;
+    return Sorcery.exit();
   }
   
   var loaded=false;
@@ -23,7 +23,7 @@ Sorcery.require([
     if (!loaded) {
       Cli.print('Command "'+command+'" does not exist!\n');
       Cli.print(helpstring);
-      return;
+      return Sorcery.exit();
     }
     else throw e;
   }
