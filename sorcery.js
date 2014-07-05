@@ -16,6 +16,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
     required : [],
   
+    async_queue : [],
+  
     template_engines : {
       'twig':'.html.twig',
       'static':'.html',
@@ -221,7 +223,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             return body(function(){
               if (typeof(iterator)==='function')
                 iterator();
-              return continuefunc();
+              return Sorcery.async(continuefunc);
             },breakfunc);
           }
           else
@@ -232,11 +234,30 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         continuefunc();
       }
       
+    },
+    
+    async : function(func) {
+      var args=[];
+      for (var i=1;i<arguments.length;i++)
+        args.push(arguments[i]);
+      this.async_queue.push({
+        func:func,
+        args:args
+      });
     }
     
   };
   
   Sorcery=GLOBAL.Sorcery;
+  
+  setInterval(function(){
+    var q=Sorcery.async_queue[0];
+    if (typeof(q)!=='undefined') {
+      Sorcery.async_queue=Sorcery.async_queue.splice(1);
+      q.func.apply(this,q.args);
+      //console.log('CALL',q);
+    }
+  },1);
   
   if (typeof module !== 'undefined' && module.exports) {
     
