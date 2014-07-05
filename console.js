@@ -18,6 +18,7 @@ Sorcery.require([
       loaded=true;
       Command.run(Cli.get_parameters());
       Cli.print('\n');
+      return Sorcery.exit();
     });
   } catch (e) {
     if (!loaded) {
