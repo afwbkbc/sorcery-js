@@ -2,8 +2,6 @@ Sorcery.define([
   'class/service',
 ],function(Service){
 
-  Sorcery.require_environment(Sorcery.ENVIRONMENT_CLI);
-  
   return Service.extend({
     
     fs : require('fs'),

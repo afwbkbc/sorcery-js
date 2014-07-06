@@ -3,8 +3,6 @@ Sorcery.define([
   'service/algorithms',
 ],function(Service,Algorithms){
   
-  Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
-  
   return Service.extend({
 
     is_in_tree : function(el) {

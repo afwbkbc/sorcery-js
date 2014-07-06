@@ -6,8 +6,6 @@ Sorcery.define([
   Controller
 ){
   
-  Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
-  
   return Service.extend({
     
     routes : [],

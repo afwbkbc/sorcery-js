@@ -12,8 +12,6 @@ Sorcery.define([
 //    jQuery
 ){
   
-  Sorcery.require_environment(Sorcery.ENVIRONMENT_WEB);
-  
   return Class.extend({
 
     construct : Sorcery.method(function(viewel) {

@@ -30,11 +30,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return look_in;
     },
     
-    require_environment : function(desired_environment) {
-      if (this.environment!=desired_environment)
-        throw new Error('This routine requires "'+desired_environment+'" environment, but "'+this.environment+'" is active!');
-    },
-    
     set_path_cache : function(path_cache) {
       this.path_cache=path_cache;
     },
@@ -266,6 +261,13 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   if (typeof module !== 'undefined' && module.exports) {
     
     Sorcery.environment = Sorcery.ENVIRONMENT_CLI;
+    
+    try {
+      require('./cache.js');
+    } catch (e) {
+      if (e.code !== 'MODULE_NOT_FOUND')
+        throw e;
+    }
     
     Sorcery.require = function(modulenames,callback) {
       modulenames=Sorcery.require_preparse(modulenames);

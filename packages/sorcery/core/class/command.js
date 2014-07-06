@@ -2,8 +2,6 @@ Sorcery.define([
   'class/class',
 ],function(Class){
   
-  Sorcery.require_environment(Sorcery.ENVIRONMENT_CLI);
-  
   return Class.extend({
     
     class_name : 'command',
