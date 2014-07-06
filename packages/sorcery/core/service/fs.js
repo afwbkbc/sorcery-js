@@ -6,6 +6,14 @@ Sorcery.define([
     
     fs : require('fs'),
     
+    watch_directory : function(dir,options) {
+      if (typeof(options)==='undefined')
+        options={permanent:true};
+      var chokidar=require('chokidar');
+      var watcher=chokidar.watch(dir,options);
+      return watcher;
+    },
+    
     list_directory : function(path) {
       return this.fs.readdirSync(path);
     },

@@ -2,3 +2,4 @@
 /.htaccess
 /app/
 /nbproject/private/
+/node_modules

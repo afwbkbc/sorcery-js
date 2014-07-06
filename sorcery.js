@@ -16,6 +16,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
     required : [],
   
+    intervals : [],
+  
     async_queue : [],
   
     template_engines : {
@@ -241,15 +243,30 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       });
     },
     
+    interval : function(callback,ms) {
+      var index=this.intervals.length;
+      this.intervals.push(setInterval(function(){
+        var ret=callback();
+        if (ret===false) {
+          clearInterval(Sorcery.intervals[index]);
+          Sorcery.intervals[index]=false;
+        }
+      },ms));
+    },
+    
     exit : function() {
-      clearInterval(this.async_poller);
+      for (var i in this.intervals) {
+        var interval=this.intervals[i];
+        if (interval!==false)
+          clearInterval(interval);
+      }
     }
     
   };
   
   Sorcery=GLOBAL.Sorcery;
   
-  Sorcery.async_poller=setInterval(function(){
+  Sorcery.interval(function(){
     var q=Sorcery.async_queue[0];
     if (typeof(q)!=='undefined') {
       Sorcery.async_queue=Sorcery.async_queue.splice(1);
@@ -321,6 +338,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     exports={
         Sorcery:GLOBAL.Sorcery,
     };
+    
+    require('./app/backend.js');
     
   }
   else {
@@ -500,8 +519,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               });
             };
 
-            
-            
             Fetcher.get_js('/app/frontend.js');
             
           },function(){
