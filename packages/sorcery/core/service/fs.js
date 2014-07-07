@@ -5,6 +5,29 @@ Sorcery.define([
   return Service.extend({
     
     fs : require('fs'),
+    mkdirp : require('mkdirp'),
+    path : require('path'),
+    
+    copy_file : function(src,dest) {
+      
+      var dirname=this.path.dirname;
+      
+      var self=this;
+      this.mkdirp(dirname(dest),function(err){
+        if (err) {
+          throw new Error('unable to create directories');
+        }
+        var r=self.fs.createReadStream(src);
+        var w=self.fs.createWriteStream(dest);
+        r.pipe(w);
+        console.log('DONE',src,dest);
+      });
+      
+    },
+    
+    file_exists : function(path) {
+      return this.fs.existsSync(path);
+    },
     
     watch_directory : function(dir,options) {
       if (typeof(options)==='undefined')

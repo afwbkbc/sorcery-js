@@ -6,11 +6,8 @@ Sorcery.require([
   Cli.print('\n');
   var command=Cli.get_parameter(0);
   var helpstring='   use "'+Cli.get_node_path()+' '+Cli.get_app_path()+' help" command to get list of available commands\n\n';
-  if (!command) {
-    Cli.print('Usage: '+Cli.get_node_path()+' '+Cli.get_app_path()+' <command>\n');
-    Cli.print(helpstring);
-    return Sorcery.exit();
-  }
+  if (!command)
+    command='help';
   
   var loaded=false;
   try {

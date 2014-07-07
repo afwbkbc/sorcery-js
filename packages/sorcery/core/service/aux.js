@@ -10,29 +10,80 @@ Sorcery.define([
 
     update_cache : function() {
       var filedata='';
+
+      var resourcecache={};
       
       var getcache = function(extensions) {
         if (typeof(extensions)==='string')
           extensions=[extensions];
         // parse bundles and generate path cache
         var pathcache={};
+
         var paths=Sorcery.get_require_paths();
+        var appstr='./app/';
+        var packagestr='./packages/';
+        var resourcestr='resource/';
         for (var i in paths) {
           var path=paths[i];
           var files=Fs.list_directory_recursive(path);
           for (var ii in files) {
-            var f=files[ii].substring(path.length+1);
-            if (f.length>3) {
-              for (var iii in extensions) {
-                var ext=extensions[iii];
-                var ei=f.indexOf(ext);
-                var fl=f.length;
-                var el=ext.length;
-                var flel=fl-el;
-                if ((ei>=0)&&(ei===flel)) {
-                  f=f.substring(0,flel);
-                  if (typeof(pathcache[f])==='undefined')
-                    pathcache[f]=path;
+            var f=files[ii].substring(path.length);
+            if (f[0]==='/')
+              f=f.substring(1);
+            var fpath=path+f;
+            var vendor,package,ipath,basedir;
+            if (fpath.indexOf(appstr)===0) {
+              vendor=null;
+              package=null;
+              ipath=fpath.substring(appstr.length);
+            }
+            else if (fpath.indexOf(packagestr)===0) {
+              fpath=fpath.substring(packagestr.length);
+              var pos=fpath.indexOf('/');
+              if (pos<0)
+                continue; // no vendor dir or package dir
+              vendor=fpath.substring(0,pos);
+              if (!vendor)
+                continue; // something's wrong
+              package=fpath.substring(pos+1);
+              if (!package)
+                continue; // something's wrong
+              pos=package.indexOf('/');
+              if (pos>=0) {
+                ipath=package.substring(pos+1);
+                package=package.substring(0,pos);
+              }
+              else {
+                ipath='';
+              }
+            }
+            else
+              continue;
+            var pos=ipath.indexOf('/');
+            if (pos>=0)
+              basedir=ipath.substring(0,pos);
+            else basedir='';
+            if (basedir==='resource') {
+              if (f.indexOf(resourcestr)===0) {
+                f=f.substring(resourcestr.length);
+                if (typeof(resourcecache[f])==='undefined') {
+                  resourcecache[f]=path+resourcestr;
+                }
+              }
+            }
+            else {
+              if (f.length>3) {
+                for (var iii in extensions) {
+                  var ext=extensions[iii];
+                  var ei=f.indexOf(ext);
+                  var fl=f.length;
+                  var el=ext.length;
+                  var flel=fl-el;
+                  if ((ei>=0)&&(ei===flel)) {
+                    f=f.substring(0,flel);
+                    if (typeof(pathcache[f])==='undefined')
+                      pathcache[f]=path;
+                  }
                 }
               }
             }
@@ -50,7 +101,7 @@ Sorcery.define([
       
       //console.log('PC',pathcache);
       
-      filedata+='Sorcery.set_path_cache('+JSON.stringify(pathcache)+');';
+      filedata+='Sorcery.set_path_cache('+JSON.stringify(pathcache)+');Sorcery.set_resource_cache('+JSON.stringify(resourcecache)+');';
       
       // other
       

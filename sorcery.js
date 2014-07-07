@@ -13,6 +13,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     packages : [ 'sorcery/core' ],
     
     path_cache : {},
+    resource_cache : {},
 
     required : [],
   
@@ -36,11 +37,31 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       this.path_cache=path_cache;
     },
     
+    set_resource_cache : function(resource_cache) {
+      this.resource_cache=resource_cache;
+    },
+    
     resolve_path : function(path,type) {
       var pc=Sorcery.path_cache[type];
-      for (var ii in pc) {
-        if (path==ii)
-          return '/'+pc[ii]+path;
+      if (typeof(pc)!=='undefined') {
+        var p=pc[path];
+        if (typeof(p)!=='undefined') {
+          var ret=p+path;
+          if (Sorcery.environment===Sorcery.ENVIRONMENT_WEB)
+            ret='/'+ret;
+          return ret;
+        }
+      }
+      return null;
+    },
+    
+    resolve_resource : function(path) {
+      var rc=Sorcery.resource_cache[path];
+      if (typeof(rc)!=='undefined') {
+        var ret=rc+path;
+        if (Sorcery.environment===Sorcery.ENVIRONMENT_WEB)
+          ret='/'+ret;
+        return ret;
       }
       return null;
     },
@@ -338,8 +359,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     exports={
         Sorcery:GLOBAL.Sorcery,
     };
-    
-    require('./app/backend.js');
+
+    if (module.parent===null)
+      require('./app/backend.js');
     
   }
   else {
