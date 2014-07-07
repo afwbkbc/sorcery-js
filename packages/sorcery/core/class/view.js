@@ -22,7 +22,7 @@ Sorcery.define([
       self.data={}; 
       
       var final_func = function() {
-
+//console.log('FINALFUNC',viewel,(new Error).stack);
         if (viewel.getAttribute('data-view')!==null)
           throw new Error('duplicate view on single element');
 

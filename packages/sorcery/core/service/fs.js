@@ -20,7 +20,6 @@ Sorcery.define([
         var r=self.fs.createReadStream(src);
         var w=self.fs.createWriteStream(dest);
         r.pipe(w);
-        console.log('DONE',src,dest);
       });
       
     },

@@ -1,12 +1,46 @@
 Sorcery.define([
   'class/service',
   'service/fs',
+  'service/cli',
   'controller/*',
-],function(Service,Fs){
+],function(Service,Fs,Cli){
 
-  var controllers=[].splice.call(arguments,2);
+  var controllers=[].splice.call(arguments,3);
   
   return Service.extend({
+
+    init_app : function(force) {
+      
+      var chk=Fs.list_directory('./app');
+      if ((chk.length>0)&&!force) {
+        return false;
+      }
+      
+      var files=[
+        'frontend.js',
+        'backend.js',
+        'controller/default.js',
+        'view/default.js',
+        'template/default.html',
+      ];
+      
+      Cli.print('initializing default app/ structure...\n');
+      
+      var src='initskel/';
+      var dst='app/';
+      for (var i in files) {
+        var f=files[i];
+        var r=Sorcery.resolve_resource(src+f);
+        if (r!==null) {
+          Fs.copy_file(r,dst+f);
+          Cli.print('\t'+dst+f+'\n');
+        }
+      }
+      
+      Cli.print('done\n');
+      
+      return true;
+    },
 
     update_cache : function() {
       var filedata='';

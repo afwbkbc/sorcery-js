@@ -106,6 +106,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     },
     
     apply_chain : function(obj,method,chain,callback,args) {
+      var finished=[];
       var next_func=function() {
         chain=chain.splice(1);
         if (chain.length)
@@ -118,12 +119,18 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       var apply_func=function() {
         var c=chain[0];
         var cb=c[method];
-        if (typeof(cb)==='undefined')
+        if (typeof(cb)==='undefined') {
           return next_func();
+        }
         else {
+          for (var i in finished) {
+            if (finished[i]===cb)
+              return next_func();
+          }
           var na=args.slice();
           na.push(next_func);
           cb.apply(obj,na);
+          finished.push(cb);
         }
       };
       apply_func();

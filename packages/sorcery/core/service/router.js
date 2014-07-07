@@ -14,7 +14,6 @@ Sorcery.define([
     
     initialize : function(controllers) {
       var self=this;
-      
       if (controllers) {
         for (var i in controllers) {
           var c=controllers[i];
