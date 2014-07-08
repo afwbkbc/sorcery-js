@@ -7,8 +7,14 @@ Sorcery.define([
     fs : require('fs'),
     mkdirp : require('mkdirp'),
     path : require('path'),
-    
-    copy_file : function(src,dest) {
+
+    remove_file : function(path) {
+      
+      this.fs.unlinkSync(path);
+      
+    },
+  
+    copy_file : function(src,dest,callback) {
       
       var dirname=this.path.dirname;
       
@@ -19,6 +25,10 @@ Sorcery.define([
         }
         var r=self.fs.createReadStream(src);
         var w=self.fs.createWriteStream(dest);
+        w.on('close',function(){
+          if (typeof(callback)==='function')
+            callback();
+        });
         r.pipe(w);
       });
       
@@ -56,12 +66,15 @@ Sorcery.define([
       return walk(path);
     },
     
-    write_file : function(path,contents) {
-      var stream = this.fs.createWriteStream(path);
+    write_file : function(path,contents,callback) {
+      this.fs.writeFileSync(path,contents,'utf8');
+      /*var stream = this.fs.createWriteStream(path);
       stream.once('open', function(fd) {
         stream.write(contents);
         stream.end();
-      });
+        if (typeof(callback)==='function')
+          callback();
+      });*/
     },
     
   });

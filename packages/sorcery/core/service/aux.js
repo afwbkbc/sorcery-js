@@ -9,7 +9,9 @@ Sorcery.define([
   
   return Service.extend({
 
-    init_app : function(force) {
+    init_app : Sorcery.method(function(force) {
+      
+      var sid=Sorcery.begin();
       
       var chk=Fs.list_directory('./app');
       if ((chk.length>0)&&!force) {
@@ -28,19 +30,26 @@ Sorcery.define([
       
       var src='initskel/';
       var dst='app/';
+      
+      var copied=0;
+      var donefunc=function(){
+        copied++;
+        if (copied===files.length) {
+          Cli.print('done\n');
+        }
+      }
+      
       for (var i in files) {
         var f=files[i];
         var r=Sorcery.resolve_resource(src+f);
         if (r!==null) {
-          Fs.copy_file(r,dst+f);
           Cli.print('\t'+dst+f+'\n');
+          Fs.copy_file(r,dst+f,donefunc);
         }
       }
       
-      Cli.print('done\n');
-      
-      return true;
-    },
+      return Sorcery.end(sid,null);
+    }),
 
     update_cache : function() {
       var filedata='';
@@ -138,7 +147,6 @@ Sorcery.define([
       filedata+='Sorcery.set_path_cache('+JSON.stringify(pathcache)+');Sorcery.set_resource_cache('+JSON.stringify(resourcecache)+');';
       
       // other
-      
       Fs.write_file('cache.js',filedata);
     },
     

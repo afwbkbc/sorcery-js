@@ -339,7 +339,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               break;
             }
             if (module===null) {
-              throw new Error('Module "'+modulename+'" could not be found in any paths ('+JSON.stringify(look_in)+')!');
+              // maybe cache is outdated, no reason to emit error?
+              //throw new Error('Module "'+modulename+'" could not be found in any paths ('+JSON.stringify(look_in)+')!');
+              collectedmodules.push(null);
             }
           }
           collectedmodules.push(self.required[modulename]);
@@ -367,9 +369,28 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         Sorcery:GLOBAL.Sorcery,
     };
 
-    if (module.parent===null)
-      require('./app/backend.js');
+    Sorcery.require([
+      'service/aux',
+      'service/fs',
+    ],function(Aux,Fs){
+
+      if (module.parent===null) {
+
+        if (!Fs.file_exists('./cache.js')) {
+          Aux.update_cache();
+          require('./cache.js');
+        }
+
+        var files=Fs.list_directory('./app');
+        if (!files.length) {
+          Aux.init_app();
+        }
     
+        require('./app/backend.js');
+      }
+    
+    });
+
   }
   else {
     Sorcery.environment = Sorcery.ENVIRONMENT_WEB;
