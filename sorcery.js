@@ -372,19 +372,33 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     Sorcery.require([
       'service/aux',
       'service/fs',
-    ],function(Aux,Fs){
+      'service/cli',
+    ],function(Aux,Fs,Cli){
 
       if (module.parent===null) {
 
         if (!Fs.file_exists('./cache.js')) {
+          Cli.print('initializing cache...');
+          Cli.mute();
           Aux.update_cache();
-          require('./cache.js');
+          Aux.reload_cache();
+          Cli.unmute();
+          Cli.print('done\n');
         }
 
         var files=Fs.list_directory('./app');
         if (!files.length) {
           Aux.init_app();
+          
+          Cli.mute();
+          Aux.update_cache();
+          Cli.unmute();
+          
+          Aux.reload_cache();
+          
         }
+    
+        Cli.print('\nsorcery backend started\n\n');
     
         require('./app/backend.js');
       }

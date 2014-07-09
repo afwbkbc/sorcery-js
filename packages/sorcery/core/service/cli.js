@@ -7,6 +7,16 @@ Sorcery.define([
     arguments : [],
     parameters : {},
     
+    muted : false,
+    
+    mute : function() {
+      this.muted=true;
+    },
+    
+    unmute : function() {
+      this.muted=false;
+    },
+    
     get_arguments : function() {
       return this.arguments;
     },
@@ -30,7 +40,9 @@ Sorcery.define([
     },
     
     print : function(text) {
-      process.stdout.write(text);
+      if (!this.muted) {
+        process.stdout.write(text);
+      }
     },
     
   });

@@ -2,11 +2,8 @@ Sorcery.define([
   'class/service',
   'service/fs',
   'service/cli',
-  'controller/*',
 ],function(Service,Fs,Cli){
 
-  var controllers=[].splice.call(arguments,3);
-  
   return Service.extend({
 
     init_app : Sorcery.method(function(force) {
@@ -31,27 +28,30 @@ Sorcery.define([
       var src='initskel/';
       var dst='app/';
       
-      var copied=0;
-      var donefunc=function(){
-        copied++;
-        if (copied===files.length) {
-          Cli.print('done\n');
-        }
-      }
-      
       for (var i in files) {
         var f=files[i];
         var r=Sorcery.resolve_resource(src+f);
         if (r!==null) {
           Cli.print('\t'+dst+f+'\n');
-          Fs.copy_file(r,dst+f,donefunc);
+          Fs.copy_file(r,dst+f);
         }
       }
+      
+      Cli.print('done\n');
       
       return Sorcery.end(sid,null);
     }),
 
+    reload_cache : function() {
+      var data=Fs.read_file('./cache.js');
+      if (data)
+        eval(data);
+    },
+
     update_cache : function() {
+      
+      Cli.print('updating cache...');
+      
       var filedata='';
 
       var resourcecache={};
@@ -142,45 +142,58 @@ Sorcery.define([
       for (var i in Sorcery.template_engines)
         pathcache[i]=getcache(Sorcery.template_engines[i]);
       
-      //console.log('PC',pathcache);
-      
       filedata+='Sorcery.set_path_cache('+JSON.stringify(pathcache)+');Sorcery.set_resource_cache('+JSON.stringify(resourcecache)+');';
       
       // other
       Fs.write_file('cache.js',filedata);
+      
+      Cli.print('done\n');
     },
     
     update_rewrites : function() {
-      var routemasks=[];
       
-      var pseudo_router={
-        
-        route : function(data) {
-          var pattern=data.pattern;
-          var pos;
-          while ((pos=pattern.indexOf(':'))>=0) {
-            var subpattern=pattern.substring(pos);
-            var pos2=subpattern.indexOf('/');
-            if (pos2>=0)
-              subpattern=subpattern.substring(0,pos2);
-            pattern=pattern.replace(subpattern,'([^/]+)');
+      Cli.print('updating rewrites...');
+      
+      Sorcery.require([
+        'controller/*',
+      ],function(){
+      
+        var controllers=arguments;
+      
+        var routemasks=[];
+
+        var pseudo_router={
+
+          route : function(data) {
+            var pattern=data.pattern;
+            var pos;
+            while ((pos=pattern.indexOf(':'))>=0) {
+              var subpattern=pattern.substring(pos);
+              var pos2=subpattern.indexOf('/');
+              if (pos2>=0)
+                subpattern=subpattern.substring(0,pos2);
+              pattern=pattern.replace(subpattern,'([^/]+)');
+            }
+            routemasks.push(pattern);
           }
-          routemasks.push(pattern);
+
+        };
+
+        for (var i in controllers) {
+          var c=controllers[i];
+          if (c.class_name==='controller')
+            c.register(pseudo_router);
         }
+
+        var string='RewriteEngine on\n';
+        for (var i in routemasks)
+          string+='RewriteRule ^'+routemasks[i]+'$ sorcery.html [QSA,L]\n';
+
+        Fs.write_file('./.htaccess',string);
+
+        Cli.print('done\n');
         
-      };
-      
-      for (var i in controllers) {
-        var c=controllers[i];
-        if (c.class_name==='controller')
-          c.register(pseudo_router);
-      }
-      
-      var string='RewriteEngine on\n';
-      for (var i in routemasks)
-        string+='RewriteRule ^'+routemasks[i]+'$ sorcery.html [QSA,L]\n';
-      
-      Fs.write_file('./.htaccess',string);
+      });
     },
   
     maintain_cache : function() {

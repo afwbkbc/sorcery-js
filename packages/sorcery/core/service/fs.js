@@ -5,7 +5,6 @@ Sorcery.define([
   return Service.extend({
     
     fs : require('fs'),
-    mkdirp : require('mkdirp'),
     path : require('path'),
 
     remove_file : function(path) {
@@ -16,7 +15,27 @@ Sorcery.define([
   
     copy_file : function(src,dest,callback) {
       
-      var dirname=this.path.dirname;
+      var pos=dest.lastIndexOf('/');
+      if (pos>=0) {
+        this.mkdir_recursive(dest.substring(0,pos+1));
+      }
+      
+      var BUF_LENGTH, buff, bytesRead, fdr, fdw, pos;
+      BUF_LENGTH = 64 * 1024;
+      buff = new Buffer(BUF_LENGTH);
+      fdr = this.fs.openSync(src, 'r');
+      fdw = this.fs.openSync(dest, 'w');
+      bytesRead = 1;
+      pos = 0;
+      while (bytesRead > 0) {
+        bytesRead = this.fs.readSync(fdr, buff, 0, BUF_LENGTH, pos);
+        this.fs.writeSync(fdw, buff, 0, bytesRead);
+        pos += bytesRead;
+      }
+      this.fs.closeSync(fdr);
+      return this.fs.closeSync(fdw);
+      
+   /*   var dirname=this.path.dirname;
       
       var self=this;
       this.mkdirp(dirname(dest),function(err){
@@ -30,8 +49,23 @@ Sorcery.define([
             callback();
         });
         r.pipe(w);
-      });
+      });*/
       
+    },
+    
+    mkdir_recursive : function(path,root) {
+
+      var dirs = path.split('/'), dir = dirs.shift(), root = (root||'')+dir+'/';
+
+      try {
+        this.fs.mkdirSync(root);
+      }
+      catch (e) {
+          //dir wasn't made, something went wrong
+          if(!this.fs.statSync(root).isDirectory()) throw new Error(e);
+      }
+
+      return !dirs.length||this.mkdir_recursive(dirs.join('/'), root);
     },
     
     file_exists : function(path) {
@@ -66,15 +100,12 @@ Sorcery.define([
       return walk(path);
     },
     
-    write_file : function(path,contents,callback) {
+    write_file : function(path,contents) {
       this.fs.writeFileSync(path,contents,'utf8');
-      /*var stream = this.fs.createWriteStream(path);
-      stream.once('open', function(fd) {
-        stream.write(contents);
-        stream.end();
-        if (typeof(callback)==='function')
-          callback();
-      });*/
+    },
+    
+    read_file : function(path) {
+      return this.fs.readFileSync(path,'utf8');
     },
     
   });
