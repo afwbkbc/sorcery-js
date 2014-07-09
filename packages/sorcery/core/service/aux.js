@@ -140,7 +140,10 @@ Sorcery.define([
       };
       
       for (var i in Sorcery.template_engines)
-        pathcache[i]=getcache(Sorcery.template_engines[i]);
+        pathcache['template/'+i]=getcache(Sorcery.template_engines[i]);
+      
+      for (var i in Sorcery.style_engines)
+        pathcache['style/'+i]=getcache(Sorcery.style_engines[i]);
       
       filedata+='Sorcery.set_path_cache('+JSON.stringify(pathcache)+');Sorcery.set_resource_cache('+JSON.stringify(resourcecache)+');';
       
@@ -207,6 +210,7 @@ Sorcery.define([
       var self=this;
       var updatefunc=function(){
         self.update_cache();
+        self.reload_cache();
         if (need_rewrites)
           self.update_rewrites();
         update_timeout=false;

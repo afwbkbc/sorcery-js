@@ -26,6 +26,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       'static':'.html',
     },
     
+    style_engines : {
+      'static':'.css',
+    },
+    
     get_require_paths : function() {
       var look_in=['./','./app/','./packages/'];
       for (var i in this.packages)

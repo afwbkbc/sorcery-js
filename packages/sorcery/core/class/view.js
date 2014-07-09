@@ -21,27 +21,34 @@ Sorcery.define([
       
       self.data={}; 
       
+      var todo=2;
+      
       var final_func = function() {
-//console.log('FINALFUNC',viewel,(new Error).stack);
-        if (viewel.getAttribute('data-view')!==null)
-          throw new Error('duplicate view on single element');
+        
+        todo--;
+        if (!todo) {
+        
+          if (viewel.getAttribute('data-view')!==null)
+            throw new Error('duplicate view on single element');
 
-        Dom.set_unique_attribute(viewel,'data-view','view',function(id){
-          
-          self.id=id;
-          Globals.store(id,self,function(){
-            
-            self.el=viewel;
-            //self.$el=jQuery(self.el);
-            Sorcery.end(sid);
-            
+          Dom.set_unique_attribute(viewel,'data-view','view',function(id){
+
+            self.id=id;
+            Globals.store(id,self,function(){
+
+              self.el=viewel;
+              //self.$el=jQuery(self.el);
+              return Sorcery.end(sid);
+
+            });
+
           });
           
-        });
+        }
         
       };
       
-      var init_html = function() {
+      var init_template = function() {
       
         if (typeof(self.template)==='undefined')
           self.template=self.module_name.replace('view/','template/');
@@ -49,9 +56,8 @@ Sorcery.define([
         self.template_engine=null;
         
         var templatepath=null;
-        
         for (var i in Sorcery.template_engines) {
-          templatepath=Sorcery.resolve_path(self.template,i);
+          templatepath=Sorcery.resolve_path(self.template,'template/'+i);
           if (templatepath!==null) {
             self.template_engine=i;
             break;
@@ -62,19 +68,44 @@ Sorcery.define([
         else {
           templatepath+=Sorcery.template_engines[self.template_engine];
         }
-        //console.log('T',templatepath);
+
         Fetcher.get_file(templatepath,function(content){
           self.template_data=content;
-          final_func();
+          return final_func();
         });
+        
       };
       
-      init_html();
+      var init_style = function() {
+        
+        if (typeof(self.style)==='undefined')
+          self.style=self.module_name.replace('view/','style/');
+        
+        self.style_engine=null;
+        
+        var stylepath=null;
+        for (var i in Sorcery.style_engines) {
+          stylepath=Sorcery.resolve_path(self.style,'style/'+i);
+          if (stylepath!==null) {
+            self.style_engine=i;
+            break;
+          }
+        }
+        if (stylepath===null)
+          throw new Error('unable to find style "'+self.style+'"');
+        else {
+          stylepath+=Sorcery.style_engines[self.style_engine];
+        }
+        
+        Fetcher.get_file(stylepath,function(content){
+          self.style_data=content;
+          return final_func();
+        });
+        
+      };
       
-      /*Fetcher.get_file('templates/'+this.template+'.html.twig',function(content){
-        console.log('CONTENT',content);
-        return Sorcery.end(sid);
-      });*/
+      init_template();
+      init_style();
       
     }),
     
@@ -97,15 +128,39 @@ Sorcery.define([
       // TODO: "loading" stuff?
       
       Sorcery.require([
+        'service/style_engine/'+self.style_engine,
         'service/template_engine/'+self.template_engine,
-      ],function(Engine){
+      ],function(StyleEngine,TemplateEngine){
         
-        Engine.render(self.template_data,self.data,function(processed_data){
+        var finalfunc=function() {
           
-          self.el.innerHTML=processed_data;
+          TemplateEngine.render(self.template_data,self.data,function(processed_data){
+
+            self.el.innerHTML=processed_data;
+
+            return Sorcery.end(sid);
+          });
+        
+        };
+        
+        var myid=self.el.getAttribute('data-view');
+        var el=document.head.querySelector('style[data-view="'+myid+'"]');
+        if (el!==null)
+          return finalfunc();
+        else {
           
-          return Sorcery.end(sid);
-        });
+          StyleEngine.render(self.style_data,function(processed_data){
+
+            var el=document.createElement('STYLE');
+            el.setAttribute('data-view',myid);
+            el.innerHTML=processed_data;
+            document.head.appendChild(el);
+
+            return finalfunc();
+            
+          });
+          
+        }
         
       });
       
@@ -171,7 +226,7 @@ Sorcery.define([
       var sid=Sorcery.begin();
       
       var self=this;
-      //console.log('REMOVE',self);
+      
       this.remove_children(function(){
         Sorcery.destroy(self,function(){
           return Sorcery.end(sid);
@@ -187,6 +242,10 @@ Sorcery.define([
       this.remove_children(function(){
         
         if (self.el) {
+          var myid=self.el.getAttribute('data-view');
+          var style=document.head.querySelector('style[data-view="'+myid+'"]');
+          if (style!==null)
+            style.remove();
           self.el.innerHTML='';
           self.el.removeAttribute('data-view');
           self.el=null;
