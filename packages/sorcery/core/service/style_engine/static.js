@@ -4,7 +4,7 @@ Sorcery.define([
   
   return StyleEngine.extend({
     
-    render : Sorcery.method(function(content,values){
+    render : Sorcery.method(function(content){
       var sid=Sorcery.begin();
       
       // just output as-is

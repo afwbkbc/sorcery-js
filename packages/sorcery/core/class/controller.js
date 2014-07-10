@@ -42,8 +42,6 @@ Sorcery.define([
 
         var collect=[];
 
-        //console.log('VIEWS',currentviews,views);
-
         var toadd=[];
         var toremove=[];
         var collectchildren=[];
@@ -160,11 +158,13 @@ Sorcery.define([
                   function(){ return ii<toadd.length },
                   function(){ ii++ },
                   function(cont){
-                    //console.log('COLLECT',ii,collect,collect[ii],toadd.length,toadd);
                     var k=toadd[ii];
                     var v=collect[k];
                     Sorcery.require('view/'+v.template,function(ViewTemplate){
-                      Sorcery.construct(ViewTemplate,baseel.querySelector(v.selector),function(vo){
+                      var selector=v.selector;
+                      if (baseel!==document)
+                        selector='[data-view="'+baseel.getAttribute('data-view')+'"] '+selector;
+                      Sorcery.construct(ViewTemplate,baseel.querySelector(selector),function(vo){
                         collect[k].view=vo;
                         vo.set(collect[k].arguments,function(){
                           vo.render(function(){
