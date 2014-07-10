@@ -21,13 +21,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   
     async_queue : [],
   
-    template_engines : {
-      twig:'.html.twig',
-      static:'.html',
-    },
-    
-    style_engines : {
-      static:'.css',
+    engines : {
+      template : {
+        twig:'.html.twig',
+        static:'.html',
+      },
+      style : {
+        static:'.css',
+      },
     },
     
     compilers : {
@@ -38,7 +39,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         dest:'.css',
       }
     },
-    
+      
     get_require_paths : function() {
       var look_in=['./','./app/','./packages/'];
       for (var i in this.packages)
@@ -63,6 +64,33 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           if (Sorcery.environment===Sorcery.ENVIRONMENT_WEB)
             ret='/'+ret;
           return ret;
+        }
+      }
+      return null;
+    },
+    
+    resolve_file : function(path) {
+      
+      var epos=path.lastIndexOf('.');
+      if (epos>=0) {
+        var extension=path.substring(epos);
+        var key;
+        if (extension==='.js')
+          key='js';
+        else {
+          for (var i in Sorcery.engines) {
+            var engines=Sorcery.engines[i];
+            for (var ii in engines) {
+              var ext=engines[ii];
+              if (ext===extension) {
+                var basename=path.substring(0,epos);
+                var ret=Sorcery.resolve_path(basename,i+'/'+ii);
+                if (ret!==null)
+                  ret+=extension;
+                return ret;
+              }
+            }
+          }
         }
       }
       return null;

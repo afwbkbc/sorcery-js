@@ -22,6 +22,8 @@ Sorcery.define([
         'view/default.js',
         'template/default.html',
         'style/default.css',
+        'global/css/normalize.css',
+        'global/css/main.css',
       ];
       
       Cli.print('initializing default app/ structure...\n');
@@ -138,11 +140,11 @@ Sorcery.define([
           js:getcache('.js'),
       };
       
-      for (var i in Sorcery.template_engines)
-        pathcache['template/'+i]=getcache(Sorcery.template_engines[i]);
+      for (var i in Sorcery.engines.template)
+        pathcache['template/'+i]=getcache(Sorcery.engines.template[i]);
       
-      for (var i in Sorcery.style_engines)
-        pathcache['style/'+i]=getcache(Sorcery.style_engines[i]);
+      for (var i in Sorcery.engines.style)
+        pathcache['style/'+i]=getcache(Sorcery.engines.style[i]);
       
       for (var i in Sorcery.compilers) {
         compiler=Sorcery.compilers[i];
@@ -211,8 +213,6 @@ Sorcery.define([
       var need_rewrites=false;
       var need_cache=false;
 
-      var first_time=true;
-      
       var self=this;
       var updatefunc=function(){
         update_timeout=false;
@@ -225,7 +225,6 @@ Sorcery.define([
           self.update_rewrites();
           need_rewrites=false;
         }
-        first_time=false;
       };
       
       var get_compiler=function(extension){
@@ -267,17 +266,13 @@ Sorcery.define([
                   if (update_timeout!==false)
                     clearTimeout(update_timeout);
                   update_timeout=setTimeout(updatefunc,100);
-                  if (!first_time) {
-                    if (event!=='change') {
-                      if (event==='add')
-                        Cli.print('[+] ');
-                      else
-                        Cli.print('[-] ');
-                    }
-                    Cli.print(path+'\n');
-                    if (iscontroller)
-                      Cli.print('[~] .htaccess\n');
-                  }
+                  if (event==='add')
+                    Cli.print('[+] ');
+                  else if (event==='change')
+                    Cli.print('[~] ');
+                  else
+                    Cli.print('[-] ');
+                  Cli.print(path+'\n');
                 }
                 var compiler=get_compiler(extension);
                 if (compiler!==null) {

@@ -56,7 +56,7 @@ Sorcery.define([
         self.template_engine=null;
         
         var templatepath=null;
-        for (var i in Sorcery.template_engines) {
+        for (var i in Sorcery.engines.template) {
           templatepath=Sorcery.resolve_path(self.template,'template/'+i);
           if (templatepath!==null) {
             self.template_engine=i;
@@ -66,7 +66,7 @@ Sorcery.define([
         if (templatepath===null)
           throw new Error('unable to find template "'+self.template+'"');
         else {
-          templatepath+=Sorcery.template_engines[self.template_engine];
+          templatepath+=Sorcery.engines.template[self.template_engine];
         }
 
         Fetcher.get_file(templatepath,function(content){
@@ -84,7 +84,7 @@ Sorcery.define([
         self.style_engine=null;
         
         var stylepath=null;
-        for (var i in Sorcery.style_engines) {
+        for (var i in Sorcery.engines.style) {
           stylepath=Sorcery.resolve_path(self.style,'style/'+i);
           if (stylepath!==null) {
             self.style_engine=i;
@@ -94,7 +94,7 @@ Sorcery.define([
         if (stylepath===null)
           throw new Error('unable to find style "'+self.style+'"');
         else {
-          stylepath+=Sorcery.style_engines[self.style_engine];
+          stylepath+=Sorcery.engines.style[self.style_engine];
         }
         
         Fetcher.get_file(stylepath,function(content){
