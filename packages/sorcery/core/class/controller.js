@@ -191,8 +191,29 @@ Sorcery.define([
                             var p=c.view.selector;
                             if (path!=='')
                               p=path+'/'+p;
+                            var children;
+                            if (typeof(c.children)==='object') {
+                              if (typeof(c.children[0])==='object')
+                                children=c.children;
+                              else {
+                                children=[];
+                                for (var iiii in c.children) {
+                                  var child;
+                                  if (typeof(c.children[iiii]==='string'))
+                                    child={
+                                      template:c.children[iiii]
+                                    };
+                                  else
+                                    child=c.children[iiii];
+                                  child.selector=iiii;
+                                  children.push(child);
+                                }
+                              }
+                            }
+                            else
+                              throw new Error('children is not an object');
                             //console.log('PROCESS',p,c.view,c.children);
-                            self.set_views(c.children,p,c.view.view.el,cont);
+                            self.set_views(children,p,c.view.view.el,cont);
                           }
                           else
                             return cont();

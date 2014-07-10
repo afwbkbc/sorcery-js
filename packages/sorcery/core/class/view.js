@@ -17,6 +17,9 @@ Sorcery.define([
     construct : Sorcery.method(function(viewel) {
       var sid=Sorcery.begin();
 
+      if (viewel===null)
+        throw new Error('view container is null');
+
       var self=this;
       
       self.data={}; 
@@ -109,12 +112,26 @@ Sorcery.define([
       
     }),
     
-    set : Sorcery.method(function(values) {
+    set : Sorcery.method(function(values,v2) {
       var sid=Sorcery.begin();
+      
+      if ((typeof(values)==='string')&&typeof(v2)!=='undefined') {
+        v={};
+        v[values]=v2;
+        values=v;
+      }
       
       for (var i in values) {
         this.data[i]=values[i];
       }
+      //console.log('SET',this.data,(new Error).stack);
+      return Sorcery.end(sid);
+    }),
+    
+    get : Sorcery.method(function(key) {
+      var sid=Sorcery.begin();
+      
+      if (isset)
       
       return Sorcery.end(sid);
     }),
@@ -133,7 +150,6 @@ Sorcery.define([
       ],function(StyleEngine,TemplateEngine){
         
         var finalfunc=function() {
-          
           TemplateEngine.render(self.template_data,self.data,function(processed_data){
 
             self.el.innerHTML=processed_data;

@@ -3344,6 +3344,7 @@ var Twig = (function (Twig) {
                 return (Twig.indexOf(Twig.expression.reservedWords, match[0]) < 0);
             },
             parse: function(token, stack, context) {
+              
                 // Get the variable from the context
                 var value = Twig.expression.resolve(context[token.value], context);
                 stack.push(value);
@@ -3362,6 +3363,7 @@ var Twig = (function (Twig) {
                 output.push(token);
             },
             parse: function(token, stack, context) {
+              
                 var params = token.params && Twig.expression.parse.apply(this, [token.params, context]),
                     key = token.key,
                     object = stack.pop(),
@@ -3380,6 +3382,8 @@ var Twig = (function (Twig) {
                 // Get the variable from the context
                 if (typeof object === 'object' && key in object) {
                     value = object[key];
+                } else if (typeof object === 'object' && typeof object['get'] === 'function') {
+                  value = object.get(key);
                 } else if (object["get"+capitalize(key)] !== undefined) {
                     value = object["get"+capitalize(key)];
                 } else if (object["is"+capitalize(key)] !== undefined) {
@@ -3387,6 +3391,9 @@ var Twig = (function (Twig) {
                 } else {
                     value = null;
                 }
+                
+                console.log('VALUE',key,value);
+                
                 stack.push(Twig.expression.resolve(value, object, params));
             }
         },
@@ -3428,6 +3435,7 @@ var Twig = (function (Twig) {
                 } else {
                     value = null;
                 }
+                
                 stack.push(Twig.expression.resolve(value, object, params));
             }
         },
