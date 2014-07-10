@@ -149,35 +149,45 @@ Sorcery.define([
           return finalfunc();
         else {
           
-          StyleEngine.render(self.style_data,function(processed_data){
-
-            var stylestart='{';
-            var styleend='}';
-            var startpos,endpos;
-            
-            var final_data='';
-            do {
-              startpos=processed_data.indexOf(stylestart);
-              if (startpos>=0) {
-                final_data+='[data-view="'+self.id+'"] '+processed_data.substring(0,startpos);
-                processed_data=processed_data.substring(startpos);
-                endpos=processed_data.indexOf(styleend);
-                if (endpos>=0) {
-                  final_data+=processed_data.substring(0,endpos+1);
-                  processed_data=processed_data.substring(endpos+1);
-                }
-              }
-            } while (startpos>=0);
-            final_data+=processed_data;
-
+          var stylefinalfunc=function() {
             var el=document.createElement('STYLE');
             el.setAttribute('data-view',myid);
-            el.innerHTML=final_data;
+            el.innerHTML=self.style_cache;
             document.head.appendChild(el);
-
             return finalfunc();
+          };
+          
+          if (typeof(self.style_cache)==='undefined') {
             
-          });
+            StyleEngine.render(self.style_data,function(processed_data){
+
+              var stylestart='{';
+              var styleend='}';
+              var startpos,endpos;
+
+              var final_data='';
+              do {
+                startpos=processed_data.indexOf(stylestart);
+                if (startpos>=0) {
+                  final_data+='[data-view="'+self.id+'"] '+processed_data.substring(0,startpos);
+                  processed_data=processed_data.substring(startpos);
+                  endpos=processed_data.indexOf(styleend);
+                  if (endpos>=0) {
+                    final_data+=processed_data.substring(0,endpos+1);
+                    processed_data=processed_data.substring(endpos+1);
+                  }
+                }
+              } while (startpos>=0);
+              final_data+=processed_data;
+
+              self.style_cache=final_data;
+
+              return stylefinalfunc();
+
+            });
+          }
+          else
+            return stylefinalfunc();
           
         }
         

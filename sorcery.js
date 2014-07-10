@@ -22,12 +22,21 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     async_queue : [],
   
     template_engines : {
-      'twig':'.html.twig',
-      'static':'.html',
+      twig:'.html.twig',
+      static:'.html',
     },
     
     style_engines : {
-      'static':'.css',
+      static:'.css',
+    },
+    
+    compilers : {
+      sass:{
+        type:'style',
+        engine:'static',
+        source:'.scss',
+        dest:'.css',
+      }
     },
     
     get_require_paths : function() {

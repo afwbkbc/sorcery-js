@@ -4,10 +4,10 @@ Sorcery.define([
   
   return Service.extend({
     
-    render : Sorcery.method(function(){
+    render : Sorcery.method(function(content){
       var sid=Sorcery.begin();
       
-      // override it in descendent classes
+      // override it in descendant classes
       
       return Sorcery.end(sid);
     }),

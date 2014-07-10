@@ -7,9 +7,15 @@ Sorcery.define([
     fs : require('fs'),
     path : require('path'),
 
+    remove_directory : function(path) {
+      
+      return this.fs.rmdirSync(path);
+      
+    },
+
     remove_file : function(path) {
       
-      this.fs.unlinkSync(path);
+      return this.fs.unlinkSync(path);
       
     },
   
@@ -105,6 +111,10 @@ Sorcery.define([
     },
     
     write_file : function(path,contents) {
+      var pos=path.lastIndexOf('/');
+      if (pos>=0) {
+        this.mkdir_recursive(path.substring(0,pos+1));
+      }
       this.fs.writeFileSync(path,contents,'utf8');
     },
     

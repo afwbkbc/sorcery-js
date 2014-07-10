@@ -146,6 +146,15 @@ Sorcery.define([
       for (var i in Sorcery.style_engines)
         pathcache['style/'+i]=getcache(Sorcery.style_engines[i]);
       
+      for (var i in Sorcery.compilers) {
+        compiler=Sorcery.compilers[i];
+        compiled=getcache(compiler.source);
+        var pck=compiler.type+'/'+compiler.engine;
+        for (var ii in compiled)
+          if (typeof(pathcache[pck][ii])==='undefined')
+            pathcache[pck][ii]=compiled[ii].replace(/\.\//,'./compiled/');
+      }
+      
       filedata+='Sorcery.set_path_cache('+JSON.stringify(pathcache)+');Sorcery.set_resource_cache('+JSON.stringify(resourcecache)+');';
       
       // other
@@ -202,7 +211,7 @@ Sorcery.define([
   
     maintain_cache : function() {
       
-      this.paths=Sorcery.get_require_paths();
+      //this.paths=Sorcery.get_require_paths();
       
       var update_timeout=false;
       
@@ -218,9 +227,26 @@ Sorcery.define([
         need_rewrites=false;
       };
       
-      for (var i in this.paths) {
-        var path=this.paths[i];
-        var watcher=Fs.watch_directory(path);
+      var get_compiler=function(extension){
+        //console.log('ISC',path,Sorcery.compilers);
+        
+        for (var i in Sorcery.compilers) {
+          var compiler=Sorcery.compilers[i];
+          if (compiler.source===extension) {
+            compiler.name=i;
+            return compiler;
+          }
+        }
+        
+        return null;
+      };
+      
+      //console.log('P',this.paths);
+      //for (var i in this.paths) {
+        //var path=this.paths[i];
+        //var watcher=Fs.watch_directory(path);
+
+        var watcher=Fs.watch_directory('./');
         
         watcher.on('all',function(event,path){
           if ((path.indexOf('app/')===0)||(path.indexOf('packages/')===0)) {
@@ -229,10 +255,42 @@ Sorcery.define([
             if (update_timeout!==false)
               clearTimeout(update_timeout);
             update_timeout=setTimeout(updatefunc,100);
+            var extpos=path.lastIndexOf('.');
+            if (extpos>=0) {
+              var extension=path.substring(extpos);
+              var basename=path.substring(0,extpos);
+              if ((event==='add')||(event==='change')||(event==='unlink')) {
+                var compiler=get_compiler(extension);
+                if (compiler!==null) {
+                  var finalpath='./compiled/'+basename+compiler.dest;
+                  if (event==='unlink') {
+                    Fs.remove_file(finalpath);
+                    var spos=finalpath.lastIndexOf('/');
+                    if (spos>=0) {
+                      var fdir=finalpath.substring(0,spos);
+                      var files=Fs.list_directory(fdir);
+                      if (!files.length)
+                        Fs.remove_directory(fdir);
+                    }
+                  }
+                  else {
+                    Sorcery.require([
+                      'service/compiler/'+compiler.name
+                    ],function(Compiler){
+                      var src=Fs.read_file('./'+path);
+                      Compiler.compile(src,function(dst){
+                        Fs.write_file(finalpath,dst);
+                        Cli.print('compiled '+path+'\n');
+                      });
+                    });
+                  }
+                }
+              }
+            }
           }
         });
         
-      }
+      //}
       
     },
     
