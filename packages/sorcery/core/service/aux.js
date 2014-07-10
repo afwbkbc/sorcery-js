@@ -21,6 +21,7 @@ Sorcery.define([
         'controller/default.js',
         'view/default.js',
         'template/default.html',
+        'style/default.css',
       ];
       
       Cli.print('initializing default app/ structure...\n');

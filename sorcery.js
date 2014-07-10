@@ -381,6 +381,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
       if (module.parent===null) {
 
+        if (!Fs.file_exists('./app'))
+          Fs.mkdir('./app');
+
         if (!Fs.file_exists('./cache.js')) {
           Cli.print('initializing cache...');
           Cli.mute();

@@ -52,13 +52,17 @@ Sorcery.define([
       });*/
       
     },
-    
+
+    mkdir : function(path) {
+      this.fs.mkdirSync(path);
+    },
+  
     mkdir_recursive : function(path,root) {
 
       var dirs = path.split('/'), dir = dirs.shift(), root = (root||'')+dir+'/';
 
       try {
-        this.fs.mkdirSync(root);
+        this.mkdir(root);
       }
       catch (e) {
           //dir wasn't made, something went wrong
@@ -67,7 +71,7 @@ Sorcery.define([
 
       return !dirs.length||this.mkdir_recursive(dirs.join('/'), root);
     },
-    
+
     file_exists : function(path) {
       return this.fs.existsSync(path);
     },
