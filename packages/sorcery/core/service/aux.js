@@ -51,8 +51,6 @@ Sorcery.define([
 
     update_cache : function() {
       
-      Cli.print('updating cache...');
-      
       var filedata='';
 
       var resourcecache={};
@@ -160,12 +158,9 @@ Sorcery.define([
       // other
       Fs.write_file('cache.js',filedata);
       
-      Cli.print('done\n');
     },
     
     update_rewrites : function() {
-      
-      Cli.print('updating rewrites...');
       
       Sorcery.require([
         'controller/*',
@@ -204,27 +199,33 @@ Sorcery.define([
 
         Fs.write_file('./.htaccess',string);
 
-        Cli.print('done\n');
-        
       });
     },
   
-    maintain_cache : function() {
+    maintain : function() {
       
       //this.paths=Sorcery.get_require_paths();
       
       var update_timeout=false;
       
       var need_rewrites=false;
+      var need_cache=false;
+
+      var first_time=true;
       
       var self=this;
       var updatefunc=function(){
-        self.update_cache();
-        self.reload_cache();
-        if (need_rewrites)
-          self.update_rewrites();
         update_timeout=false;
-        need_rewrites=false;
+        if (need_cache) {
+          self.update_cache();
+          self.reload_cache();
+          need_cache=false;
+        }
+        if (need_rewrites) {
+          self.update_rewrites();
+          need_rewrites=false;
+        }
+        first_time=false;
       };
       
       var get_compiler=function(extension){
@@ -248,18 +249,36 @@ Sorcery.define([
 
         var watcher=Fs.watch_directory('./');
         
+        //console.log('C',Sorcery.path_cache);
+        
         watcher.on('all',function(event,path){
           if ((path.indexOf('app/')===0)||(path.indexOf('packages/')===0)) {
-            if (path.indexOf('/controller/')>=0)
-              need_rewrites=true;
-            if (update_timeout!==false)
-              clearTimeout(update_timeout);
-            update_timeout=setTimeout(updatefunc,100);
             var extpos=path.lastIndexOf('.');
             if (extpos>=0) {
               var extension=path.substring(extpos);
               var basename=path.substring(0,extpos);
               if ((event==='add')||(event==='change')||(event==='unlink')) {
+                var iscontroller=path.indexOf('/controller/')>=0;
+                if ((event!=='change')||iscontroller) {
+                  if (iscontroller)
+                    need_rewrites=true;
+                  if (event!=='change')
+                    need_cache=true;
+                  if (update_timeout!==false)
+                    clearTimeout(update_timeout);
+                  update_timeout=setTimeout(updatefunc,100);
+                  if (!first_time) {
+                    if (event!=='change') {
+                      if (event==='add')
+                        Cli.print('[+] ');
+                      else
+                        Cli.print('[-] ');
+                    }
+                    Cli.print(path+'\n');
+                    if (iscontroller)
+                      Cli.print('[~] .htaccess\n');
+                  }
+                }
                 var compiler=get_compiler(extension);
                 if (compiler!==null) {
                   var finalpath='./compiled/'+basename+compiler.dest;
@@ -272,17 +291,30 @@ Sorcery.define([
                       if (!files.length)
                         Fs.remove_directory(fdir);
                     }
+                    Cli.print('[-] '+finalpath.replace(/\.\//,'')+'\n');
                   }
                   else {
-                    Sorcery.require([
-                      'service/compiler/'+compiler.name
-                    ],function(Compiler){
-                      var src=Fs.read_file('./'+path);
-                      Compiler.compile(src,function(dst){
-                        Fs.write_file(finalpath,dst);
-                        Cli.print('compiled '+path+'\n');
+                    var m1=Fs.file_info(path,'mtime');
+                    var m2;
+                    if (Fs.file_exists(finalpath))
+                      m2=Fs.file_info(finalpath,'mtime');
+                    else m2='';
+                    
+                    if (m1>m2) {
+                      Sorcery.require([
+                        'service/compiler/'+compiler.name
+                      ],function(Compiler){
+                        var src=Fs.read_file('./'+path);
+                        Compiler.compile(src,function(dst){
+                          if (Fs.file_exists(finalpath))
+                            Cli.print('[~] ');
+                          else
+                            Cli.print('[+] ');
+                          Fs.write_file(finalpath,dst);
+                          Cli.print(finalpath.replace(/\.\//,'')+'\n');
+                        });
                       });
-                    });
+                    }
                   }
                 }
               }
@@ -292,7 +324,9 @@ Sorcery.define([
         
       //}
       
-    },
+      Cli.print('[*] maintainer initialized\n');
+      
+    }
     
   });
 

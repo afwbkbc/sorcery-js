@@ -7,6 +7,17 @@ Sorcery.define([
     fs : require('fs'),
     path : require('path'),
 
+    file_info : function(path,key) {
+      var info=this.fs.statSync(path);
+      if (typeof(key)!=='undefined') {
+        if (typeof(info[key])==='undefined')
+          return null;
+        else return info[key];
+      }
+      else
+        return info;
+    },
+
     remove_directory : function(path) {
       
       return this.fs.rmdirSync(path);

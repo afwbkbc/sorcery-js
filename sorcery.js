@@ -414,7 +414,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           
         }
     
-        Cli.print('\nsorcery backend started\n\n');
+        Cli.print('\n[!] sorcery backend started\n\n');
     
         require('./app/backend.js');
       }
