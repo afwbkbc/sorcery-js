@@ -1,1 +1,0 @@
-please see library/ directory for documentation on libraries

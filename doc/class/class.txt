@@ -1,2 +1,0 @@
-base class abstraction, provides .extend and other class-related methods
-all other classes must extend this class
