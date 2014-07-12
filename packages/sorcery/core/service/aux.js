@@ -191,7 +191,7 @@ Sorcery.define([
 
         for (var i in controllers) {
           var c=controllers[i];
-          if (c.class_name==='controller')
+          if ((typeof(c)!=='undefined')&&(c.class_name==='controller'))
             c.register(pseudo_router);
         }
 

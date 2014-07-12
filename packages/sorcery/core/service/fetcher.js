@@ -60,7 +60,7 @@ Sorcery.define([
       
       var script = document.createElement('script');
       script.src=path;
-      script.onload=function(e){
+      script.onload=function(){
         if (typeof(success)==='function')
           return success();
       };

@@ -6,7 +6,7 @@ if (typeof(GLOBAL)==='undefined')
 if (typeof(GLOBAL.Sorcery) === 'undefined') {
   
   GLOBAL.Sorcery = {
-    
+
     ENVIRONMENT_CLI : 'cli',
     ENVIRONMENT_WEB : 'web',
       
@@ -16,6 +16,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     resource_cache : {},
 
     required : [],
+    requiring : [],
+    defining : [],
   
     intervals : [],
   
@@ -347,7 +349,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   if (typeof module !== 'undefined' && module.exports) {
     
     Sorcery.environment = Sorcery.ENVIRONMENT_CLI;
-    
+
+    var fname=module.filename;
+    var fnamepos=fname.lastIndexOf('/sorcery.js');
+    if (fnamepos<0)
+      throw new Error('internal error: module.filename does not contain "/sorcery.js"');
+
+    Sorcery.root_path=fname.substring(0,fnamepos);
+
     try {
       require('./cache.js');
     } catch (e) {
@@ -475,6 +484,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   else {
     Sorcery.environment = Sorcery.ENVIRONMENT_WEB;
 
+    Sorcery.root_path='/'; // TODO: rel paths?
+
     // need to fetch fetcher first, have to use some hacks
     Sorcery.define = function(modulenames,callback) {
       var modules=[];
@@ -534,7 +545,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               var isready=true;
               var modules=[];
               var success=function(module) {
-                if (module!==null)
+                if (module!==false)
                   modules.push(module);
                 tofetch--;
                 if (tofetch<1) {
@@ -555,14 +566,26 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                 else path='./';
                 if (typeof(Sorcery.requiring[modulename])==='undefined') {
                   Sorcery.requiring[modulename]=true;
-                  Fetcher.get_js('/'+path+modulename+'.js',function(content){
-                    return success(null);
+                  Sorcery.defining[modulename]=true;
+                  Fetcher.get_js('/'+path+modulename+'.js',function(){
+                    if (typeof(Sorcery.defining[modulename])!=='undefined') {
+                      var script=document.querySelector('head > script[data-module="'+modulename+'"]');
+                      return Sorcery.require([],function(){
+                        Sorcery.required[modulename]=null;
+                        //Sorcery.required[modulename].module_name=modulename;
+                        delete Sorcery.requiring[modulename];
+                        return success(null);
+                      });
+                    }
+                    else
+                      return success(false);
                   },function(){
                     throw new Error('Unable to load module "'+modulename+'"!');
                   }).setAttribute('data-module',modulename);
                 }
-                else
-                  return success(null);
+                else {
+                  return success(false);
+                }
               };
               for (var i in modulenames) {
                 var modulename=modulenames[i];
@@ -641,6 +664,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               var modulename=scriptel.getAttribute('data-module');
               if (!modulename)
                 throw new Error('internal error: module name not defined in script tag');
+              
+              delete Sorcery.defining[modulename];
               
               return Sorcery.require(modulenames,function(){
                 Sorcery.required[modulename]=callback.apply(null,arguments);

@@ -17,7 +17,7 @@ Sorcery.define([
       if (controllers) {
         for (var i in controllers) {
           var c=controllers[i];
-          if (c.class_name==='controller') {
+          if (c&&(c.class_name==='controller')) {
             c.register(this);
           }
         }
