@@ -8,7 +8,7 @@ Sorcery.define([
     fetch_queue : {},
     
     get_file : function(path,success,error) {
-      //console.log('GET FILE',path,success,error);
+      //console.log('GET FILE',path,success,error,(new Error).stack);
       if (typeof(this.file_cache[path])!=='undefined')
         return success(this.file_cache[path]);
       

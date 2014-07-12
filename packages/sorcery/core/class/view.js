@@ -16,7 +16,7 @@ Sorcery.define([
 
     construct : Sorcery.method(function(viewel) {
       var sid=Sorcery.begin();
-
+      
       if (viewel===null)
         throw new Error('view container is null');
 
@@ -30,6 +30,7 @@ Sorcery.define([
         
         todo--;
         if (!todo) {
+          //console.log('FF',viewel);
         
           if (viewel.getAttribute('data-view')!==null)
             throw new Error('duplicate view on single element');
@@ -41,6 +42,7 @@ Sorcery.define([
 
               self.el=viewel;
               //self.$el=jQuery(self.el);
+              
               return Sorcery.end(sid);
 
             });
@@ -71,7 +73,7 @@ Sorcery.define([
         else {
           templatepath+=Sorcery.engines.template[self.template_engine];
         }
-
+//console.log('INITTEMPLATE',(new Error).stack);
         Fetcher.get_file(templatepath,function(content){
           self.template_data=content;
           return final_func();
@@ -81,30 +83,37 @@ Sorcery.define([
       
       var init_style = function() {
         
-        if (typeof(self.style)==='undefined')
+        if (self.style===true)
           self.style=self.module_name.replace('view/','style/');
+        else if (self.style===false)
+          delete self.style;
         
-        self.style_engine=null;
+        if (typeof(self.style)!=='undefined') {
         
-        var stylepath=null;
-        for (var i in Sorcery.engines.style) {
-          stylepath=Sorcery.resolve_path(self.style,'style/'+i);
-          if (stylepath!==null) {
-            self.style_engine=i;
-            break;
+          self.style_engine=null;
+
+          var stylepath=null;
+          for (var i in Sorcery.engines.style) {
+            stylepath=Sorcery.resolve_path(self.style,'style/'+i);
+            if (stylepath!==null) {
+              self.style_engine=i;
+              break;
+            }
           }
+          if (stylepath===null)
+            throw new Error('unable to find style "'+self.style+'"');
+          else {
+            stylepath+=Sorcery.engines.style[self.style_engine];
+          }
+
+          Fetcher.get_file(stylepath,function(content){
+            self.style_data=content;
+            return final_func();
+          });
         }
-        if (stylepath===null)
-          throw new Error('unable to find style "'+self.style+'"');
         else {
-          stylepath+=Sorcery.engines.style[self.style_engine];
-        }
-        
-        Fetcher.get_file(stylepath,function(content){
-          self.style_data=content;
           return final_func();
-        });
-        
+        }
       };
       
       init_template();
@@ -145,11 +154,11 @@ Sorcery.define([
       // TODO: "loading" stuff?
       
       Sorcery.require([
-        'service/style_engine/'+self.style_engine,
         'service/template_engine/'+self.template_engine,
-      ],function(StyleEngine,TemplateEngine){
+      ],function(TemplateEngine){
         
         var finalfunc=function() {
+          
           TemplateEngine.render(self.template_data,self.data,function(processed_data){
 
             self.el.innerHTML=processed_data;
@@ -161,8 +170,10 @@ Sorcery.define([
         
         var myid=self.el.getAttribute('data-view');
         var el=document.head.querySelector('style[data-view="'+myid+'"]');
-        if (el!==null)
+        
+        if ((el!==null)||(typeof(self.style)==='undefined')) {
           return finalfunc();
+        }
         else {
           
           var stylefinalfunc=function() {
@@ -175,31 +186,37 @@ Sorcery.define([
           
           if (typeof(self.style_cache)==='undefined') {
             
-            StyleEngine.render(self.style_data,function(processed_data){
+            Sorcery.require([
+              'service/style_engine/'+self.style_engine,
+            ],function(StyleEngine){
 
-              var stylestart='{';
-              var styleend='}';
-              var startpos,endpos;
+              StyleEngine.render(self.style_data,function(processed_data){
 
-              var final_data='';
-              do {
-                startpos=processed_data.indexOf(stylestart);
-                if (startpos>=0) {
-                  final_data+='[data-view="'+self.id+'"] '+processed_data.substring(0,startpos);
-                  processed_data=processed_data.substring(startpos);
-                  endpos=processed_data.indexOf(styleend);
-                  if (endpos>=0) {
-                    final_data+=processed_data.substring(0,endpos+1);
-                    processed_data=processed_data.substring(endpos+1);
+                var stylestart='{';
+                var styleend='}';
+                var startpos,endpos;
+
+                var final_data='';
+                do {
+                  startpos=processed_data.indexOf(stylestart);
+                  if (startpos>=0) {
+                    final_data+='[data-view="'+self.id+'"] '+processed_data.substring(0,startpos);
+                    processed_data=processed_data.substring(startpos);
+                    endpos=processed_data.indexOf(styleend);
+                    if (endpos>=0) {
+                      final_data+=processed_data.substring(0,endpos+1);
+                      processed_data=processed_data.substring(endpos+1);
+                    }
                   }
-                }
-              } while (startpos>=0);
-              final_data+=processed_data;
+                } while (startpos>=0);
+                final_data+=processed_data;
 
-              self.style_cache=final_data;
+                self.style_cache=final_data;
 
-              return stylefinalfunc();
+                return stylefinalfunc();
 
+              });
+              
             });
           }
           else

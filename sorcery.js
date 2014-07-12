@@ -170,8 +170,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           }
           var na=args.slice();
           na.push(next_func);
-          cb.apply(obj,na);
           finished.push(cb);
+          cb.apply(obj,na);
         }
       };
       apply_func();
