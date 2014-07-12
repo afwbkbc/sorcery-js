@@ -416,7 +416,29 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       'service/cli',
     ],function(Aux,Fs,Cli){
 
-      if (module.parent===null) {
+      var command=Cli.get_parameter(0);
+
+      if (command) {
+        var loaded=false;
+        try {
+          Sorcery.require('command/'+command,function(Command){
+            if (Command===null)
+              throw new Error;
+            loaded=true;
+            Cli.print('\n');
+            Command.run(Cli.get_parameters());
+            Cli.print('\n');
+            return Sorcery.exit();
+          });
+        } catch (e) {
+          if (!loaded) {
+            Cli.print('Command "'+command+'" does not exist!\n');
+            return Sorcery.exit();
+          }
+          else throw e;
+        }
+      }
+      else {
 
         if (!Fs.file_exists('./app'))
           Fs.mkdir('./app');
