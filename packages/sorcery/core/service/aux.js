@@ -195,7 +195,7 @@ Sorcery.define([
             c.register(pseudo_router);
         }
 
-        var string='RewriteEngine on\n';
+        var string='RewriteEngine on\nDirectorySlash off\n';
         for (var i in routemasks)
           string+='RewriteRule ^'+routemasks[i]+'$ sorcery.html [QSA,L]\n';
 

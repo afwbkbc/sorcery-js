@@ -199,7 +199,7 @@ Sorcery.define([
                                 children=[];
                                 for (var iiii in c.children) {
                                   var child;
-                                  if (typeof(c.children[iiii]==='string'))
+                                  if (typeof(c.children[iiii])==='string')
                                     child={
                                       template:c.children[iiii]
                                     };
