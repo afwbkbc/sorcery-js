@@ -417,7 +417,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     ],function(Aux,Fs,Cli){
 
       var command=Cli.get_parameter(0);
-
+      
       if (command) {
         var loaded=false;
         try {

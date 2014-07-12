@@ -206,8 +206,6 @@ Sorcery.define([
   
     maintain : function() {
       
-      //this.paths=Sorcery.get_require_paths();
-      
       var update_timeout=false;
       
       var need_rewrites=false;
@@ -241,84 +239,75 @@ Sorcery.define([
         return null;
       };
       
-      //console.log('P',this.paths);
-      //for (var i in this.paths) {
-        //var path=this.paths[i];
-        //var watcher=Fs.watch_directory(path);
+      var watcher=Fs.watch_directory('./',{ignored: /[\/\\]\./});
 
-        var watcher=Fs.watch_directory('./');
-        
-        //console.log('C',Sorcery.path_cache);
-        
-        watcher.on('all',function(event,path){
-          if ((path.indexOf('app/')===0)||(path.indexOf('packages/')===0)) {
-            var extpos=path.lastIndexOf('.');
-            if (extpos>=0) {
-              var extension=path.substring(extpos);
-              var basename=path.substring(0,extpos);
-              if ((event==='add')||(event==='change')||(event==='unlink')) {
-                var iscontroller=path.indexOf('/controller/')>=0;
-                if ((event!=='change')||iscontroller) {
-                  if (iscontroller)
-                    need_rewrites=true;
-                  if (event!=='change')
-                    need_cache=true;
-                  if (update_timeout!==false)
-                    clearTimeout(update_timeout);
-                  update_timeout=setTimeout(updatefunc,100);
-                  if (event==='add')
-                    Cli.print('[+] ');
-                  else if (event==='change')
-                    Cli.print('[~] ');
-                  else
-                    Cli.print('[-] ');
-                  Cli.print(path+'\n');
-                }
-                var compiler=get_compiler(extension);
-                if (compiler!==null) {
-                  var finalpath='./compiled/'+basename+compiler.dest;
-                  if (event==='unlink') {
-                    Fs.remove_file(finalpath);
-                    var spos=finalpath.lastIndexOf('/');
-                    if (spos>=0) {
-                      var fdir=finalpath.substring(0,spos);
-                      var files=Fs.list_directory(fdir);
-                      if (!files.length)
-                        Fs.remove_directory(fdir);
-                    }
-                    Cli.print('[-] '+finalpath.replace(/\.\//,'')+'\n');
+      watcher.on('all',function(event,path){
+        if ((path.indexOf('app/')===0)||(path.indexOf('packages/')===0)) {
+          var extpos=path.lastIndexOf('.');
+          if (extpos>=0) {
+            var extension=path.substring(extpos);
+            var basename=path.substring(0,extpos);
+            if ((event==='add')||(event==='change')||(event==='unlink')) {
+              var iscontroller=path.indexOf('/controller/')>=0;
+              if ((event!=='change')||iscontroller) {
+                if (iscontroller)
+                  need_rewrites=true;
+                if (event!=='change')
+                  need_cache=true;
+                if (update_timeout!==false)
+                  clearTimeout(update_timeout);
+                update_timeout=setTimeout(updatefunc,100);
+                if (event==='add')
+                  Cli.print('[+] ');
+                else if (event==='change')
+                  Cli.print('[~] ');
+                else
+                  Cli.print('[-] ');
+                Cli.print(path+'\n');
+              }
+              var compiler=get_compiler(extension);
+              if (compiler!==null) {
+                var finalpath='./compiled/'+basename+compiler.dest;
+                if (event==='unlink') {
+                  Fs.remove_file(finalpath);
+                  var spos=finalpath.lastIndexOf('/');
+                  if (spos>=0) {
+                    var fdir=finalpath.substring(0,spos);
+                    var files=Fs.list_directory(fdir);
+                    if (!files.length)
+                      Fs.remove_directory(fdir);
                   }
-                  else {
-                    var m1=Fs.file_info(path,'mtime');
-                    var m2;
-                    if (Fs.file_exists(finalpath))
-                      m2=Fs.file_info(finalpath,'mtime');
-                    else m2='';
-                    
-                    if (m1>m2) {
-                      Sorcery.require([
-                        'service/compiler/'+compiler.name
-                      ],function(Compiler){
-                        var src=Fs.read_file('./'+path);
-                        Compiler.compile(src,function(dst){
-                          if (Fs.file_exists(finalpath))
-                            Cli.print('[~] ');
-                          else
-                            Cli.print('[+] ');
-                          Fs.write_file(finalpath,dst);
-                          Cli.print(finalpath.replace(/\.\//,'')+'\n');
-                        });
+                  Cli.print('[-] '+finalpath.replace(/\.\//,'')+'\n');
+                }
+                else {
+                  var m1=Fs.file_info(path,'mtime');
+                  var m2;
+                  if (Fs.file_exists(finalpath))
+                    m2=Fs.file_info(finalpath,'mtime');
+                  else m2='';
+
+                  if (m1>m2) {
+                    Sorcery.require([
+                      'service/compiler/'+compiler.name
+                    ],function(Compiler){
+                      var src=Fs.read_file('./'+path);
+                      Compiler.compile(src,function(dst){
+                        if (Fs.file_exists(finalpath))
+                          Cli.print('[~] ');
+                        else
+                        Cli.print('[+] ');
+                        Fs.write_file(finalpath,dst);
+                        Cli.print(finalpath.replace(/\.\//,'')+'\n');
                       });
-                    }
+                    });
                   }
                 }
               }
             }
           }
-        });
+        }
+      });
         
-      //}
-      
       Cli.print('[*] maintainer initialized\n');
       
     }
