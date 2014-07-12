@@ -121,6 +121,40 @@ Sorcery.define([
       
     }),
     
+    clear : Sorcery.method(function() {
+      var sid=Sorcery.begin();
+      
+      var k=[];
+      for (var i in this.data)
+        k.push(i);
+      
+      this.unset(k,function(){
+        return Sorcery.end(sid);
+      });
+      
+    }),
+    
+    unset : Sorcery.method(function(keys) {
+      var sid=Sorcery.begin();
+      
+      if (typeof(keys)==='string')
+        keys=[keys];
+      
+      for (var i in keys) {
+        var key=keys[i];
+        if (typeof(this.data[key])!=='undefined') {
+          
+          //console.log('UNSET',key);
+          
+          // ...
+          
+          delete this.data[key];
+        }
+      }
+      
+      return Sorcery.end(sid);
+    }),
+    
     set : Sorcery.method(function(values,v2) {
       var sid=Sorcery.begin();
       
@@ -131,9 +165,14 @@ Sorcery.define([
       }
       
       for (var i in values) {
+        
+        //console.log('SET',i,values[i]);
+        
+        // ...
+        
         this.data[i]=values[i];
       }
-      //console.log('SET',this.data,(new Error).stack);
+      
       return Sorcery.end(sid);
     }),
     
@@ -159,9 +198,13 @@ Sorcery.define([
         
         var finalfunc=function() {
           
+          self.trigger('prerender');
+          
           TemplateEngine.render(self.template_data,self.data,function(processed_data){
 
             self.el.innerHTML=processed_data;
+
+            self.trigger('postrender');
 
             return Sorcery.end(sid);
           });

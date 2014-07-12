@@ -137,7 +137,7 @@ Sorcery.define([
               }
             }
 
-            //console.log('RA',toremove,toadd,collect,collectchildren);
+            //console.log('RA',toremove,toadd);
 
             var i;
             Sorcery.loop.for(
@@ -147,7 +147,11 @@ Sorcery.define([
               function(cont){
                 var k=toremove[i];
                 var v=currentviews[k];
-                if (!v.view._destroyed)
+                if (toadd.indexOf(k)>=0) {
+                  // dont remove, just rerender later
+                  return cont();
+                }
+                else if (!v.view._destroyed)
                   v.view.remove(cont);
                 else return cont();
               },
@@ -160,20 +164,44 @@ Sorcery.define([
                   function(cont){
                     var k=toadd[ii];
                     var v=collect[k];
-                    Sorcery.require('view/'+v.template,function(ViewTemplate){
-                      var selector=v.selector;
-                      if (baseel!==document)
-                        selector='[data-view="'+baseel.getAttribute('data-view')+'"] '+selector;
-                      Sorcery.construct(ViewTemplate,baseel.querySelector(selector),function(vo){
-                        collect[k].view=vo;
-                        vo.set(collect[k].arguments,function(){
-                          vo.render(function(){
-                            cont();
+                    if (toremove.indexOf(k)>=0) {
+                      var cv=currentviews[k];
+                      
+                      if (typeof(cv.view)!=='undefined') {
+                        var finalfunc=function(){
+                          cv.view.render(function(){
+                            v.view=cv.view;
+                            return cont();
                           });
+                        }
+                        // dont add, just rerender
+                        cv.view.clear(function(){
+                          if (typeof(v.arguments)!=='undefined')
+                            return cv.view.set(v.arguments,finalfunc);
+                          else return finalfunc();
+                        });
 
+                      }
+                      else
+                        throw new Error('internal error: no view');
+                    }
+                    else {
+                      Sorcery.require('view/'+v.template,function(ViewTemplate){
+                        var selector=v.selector;
+                        if (baseel!==document)
+                          selector='[data-view="'+baseel.getAttribute('data-view')+'"] '+selector;
+                        Sorcery.construct(ViewTemplate,baseel.querySelector(selector),function(vo){
+                          collect[k].view=vo;
+                          vo.clear(function(){
+                            vo.set(collect[k].arguments,function(){
+                              vo.render(function(){
+                                cont();
+                              });
+                            });
+                          });
                         });
                       });
-                    });
+                    }
                   },
                   function(){
                     //console.log('UPDATE',viewskey,currentviews,collect);
