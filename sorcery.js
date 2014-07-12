@@ -70,14 +70,25 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     },
     
     resolve_path : function(path,type) {
-      var pc=Sorcery.path_cache[type];
-      if (typeof(pc)!=='undefined') {
-        var p=pc[path];
-        if (typeof(p)!=='undefined') {
-          var ret=p+path;
-          if (Sorcery.environment===Sorcery.ENVIRONMENT_WEB)
-            ret='/'+ret;
-          return ret;
+      var types=[];
+      if (type.indexOf('*')===type.length-1) {
+        for (var i in Sorcery.path_cache)
+          if ((type==='*')||(i.indexOf(type.substring(0,type.length-1))>=0))
+            types.push(i);
+      }
+      else
+        types.push(type);
+      for (var i in types) {
+        var type=types[i];
+        var pc=Sorcery.path_cache[type];
+        if (typeof(pc)!=='undefined') {
+          var p=pc[path];
+          if (typeof(p)!=='undefined') {
+            var ret=p+path;
+            if (Sorcery.environment===Sorcery.ENVIRONMENT_WEB)
+              ret='/'+ret;
+            return ret;
+          }
         }
       }
       return null;
@@ -572,6 +583,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               
               modulenames=Sorcery.require_preparse(modulenames);
               
+              //console.log('MODULENAMES',modulenames);
               var tofetch=modulenames.length;
               var isready=true;
               var modules=[];
@@ -580,6 +592,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   modules.push(module);
                 tofetch--;
                 if (tofetch<1) {
+                  //console.log('SUCCESS',isready,module);
                   if (isready)
                     return callback.apply(null,modules);
                   else {
@@ -594,18 +607,16 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                 var path=null;
                 if (typeof(Sorcery.path_cache.js[modulename])!=='undefined')
                   path=Sorcery.path_cache.js[modulename];
-                else path='./';
+                else
+                  return success(Sorcery.required[modulename]=null);
                 if (typeof(Sorcery.requiring[modulename])==='undefined') {
                   Sorcery.requiring[modulename]=true;
                   Sorcery.defining[modulename]=true;
                   Fetcher.get_js('/'+path+modulename+'.js',function(){
                     if (typeof(Sorcery.defining[modulename])!=='undefined') {
-                      var script=document.querySelector('head > script[data-module="'+modulename+'"]');
                       return Sorcery.require([],function(){
-                        Sorcery.required[modulename]=null;
-                        //Sorcery.required[modulename].module_name=modulename;
                         delete Sorcery.requiring[modulename];
-                        return success(null);
+                        return success(Sorcery.required[modulename]=null);
                       });
                     }
                     else

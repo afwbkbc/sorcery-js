@@ -87,7 +87,6 @@ Sorcery.define([
           self.style=self.module_name.replace('view/','style/');
         else if (self.style===false)
           delete self.style;
-        else self.style='style/'+self.style;
         
         if (typeof(self.style)!=='undefined') {
         
