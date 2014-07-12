@@ -163,6 +163,10 @@ Sorcery.define([
     },
     
     update_rewrites : function() {
+
+      Sorcery.unrequire([
+        'controller/*',
+      ]);
       
       Sorcery.require([
         'controller/*',
@@ -194,7 +198,7 @@ Sorcery.define([
           if ((typeof(c)!=='undefined')&&(c.class_name==='controller'))
             c.register(pseudo_router);
         }
-
+        
         var string='RewriteEngine on\nDirectorySlash off\n';
         for (var i in routemasks)
           string+='RewriteRule ^'+routemasks[i]+'$ sorcery.html [QSA,L]\n';

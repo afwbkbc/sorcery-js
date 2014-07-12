@@ -41,7 +41,19 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         dest:'.css',
       }
     },
-      
+    
+    unrequire : function(modulenames) {
+      if (typeof(modulenames)==='string')
+        modulenames=[modulenames];
+      modulenames=Sorcery.require_preparse(modulenames);
+      for (var i in modulenames) {
+        var modulename=modulenames[i];
+        if (typeof(Sorcery.required[modulename])!=='undefined') {
+          delete Sorcery.required[modulename];
+        }
+      }
+    },
+    
     get_require_paths : function() {
       var look_in=['./','./app/','./packages/'];
       for (var i in this.packages)
@@ -364,6 +376,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         throw e;
     }
     
+    Sorcery.require_towrap={};
+    
     Sorcery.require = function(modulenames,callback) {
       modulenames=Sorcery.require_preparse(modulenames);
       var look_in=this.get_require_paths();
@@ -385,7 +399,24 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   continue;
               }
               self.requiring[modulepath]=modulename;
-              module=require(modulepath);
+              if (typeof(Sorcery.require_towrap[modulepath])==='undefined') {
+                Sorcery.require_towrap[modulepath]=true;
+                module=require(modulepath);
+              }
+              else {
+                Sorcery.require([
+                  'service/fs',
+                ],function(Fs){
+                  var code=Fs.read_file(modulepath);
+                  var wrapargs=function(first,second,third) {
+                    eval(code);
+                    module={};
+                  };
+                  return wrapargs(null,null,{
+                    id:modulepath
+                  });
+                });
+              }
               break;
             }
             if (module===null) {
