@@ -69,11 +69,17 @@ Sorcery.define([
             if (typeof(a)==='undefined')
               a={};
             var p=path+'/'+s;
-            collect.push({
+            
+            var clt={
               selector:s,
               template:t,
               arguments:a
-            });
+            };
+            
+            if (typeof(view.style)!=='undefined')
+              clt.style=view.style;
+            
+            collect.push(clt);
 
             if (view.children) {
               collectchildren.push({
@@ -86,7 +92,7 @@ Sorcery.define([
           },
           function(){
             var sameviews=function(v,vv){
-              return (v.selector===vv.selector)&&(v.template===vv.template);
+              return (v.selector===vv.selector)&&(v.template===vv.template)&&(v.style===vv.style);
             };
 
             for (var ii in currentviews) {
@@ -179,9 +185,17 @@ Sorcery.define([
                       if (resolve===null)
                         throw new Error('neither view nor template exist for "'+v.template+'"');
                       Sorcery.require('class/view',function(View){
-                        var template=View.extend({});
+                        var template=View.extend();
                         template.module_name='#defaultview';
                         template.template=v.template;
+                        if (typeof(v.style)!=='undefined')
+                          template.style=v.style;
+                        else {
+                          var trystyle=v.template.replace(/template\/|view\//,'style/');
+                          resolve=Sorcery.resolve_path(trystyle,'style/*');
+                          if (resolve!==null)
+                            template.style=trystyle;
+                        }
                         return viewfunc(template);
                       });
                     }
