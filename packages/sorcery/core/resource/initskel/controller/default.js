@@ -12,7 +12,7 @@ Sorcery.define([
         handler : function() {
           
           return {
-            template:'default',
+            template:'view/default',
           };
           
         }

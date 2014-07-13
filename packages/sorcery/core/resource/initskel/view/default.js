@@ -4,7 +4,7 @@ Sorcery.define([
   
   return View.extend({
 
-    
+    style : 'style/default'
   
   });
   
