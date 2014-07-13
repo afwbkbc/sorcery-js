@@ -379,6 +379,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       throw new Error('internal error: module.filename does not contain "/sorcery.js"');
 
     Sorcery.root_path=fname.substring(0,fnamepos);
+    
+    process.chdir(Sorcery.root_path);
 
     try {
       require('./cache.js');
