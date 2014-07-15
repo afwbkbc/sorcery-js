@@ -528,7 +528,18 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   else {
     Sorcery.environment = Sorcery.ENVIRONMENT_WEB;
 
-    Sorcery.root_path='/'; // TODO: rel paths?
+    var l=window.location;
+
+    Sorcery.request={
+      host:l.host,
+      port:l.port,
+      origin:l.origin,
+      protocol:l.protocol,
+    };
+
+    Sorcery.root_path=Sorcery.request.protocol+'//'+Sorcery.request.host;
+    if (Sorcery.request.port!=='')
+      Sorcery.root_path+=':'+Sorcery.request.port;
 
     // need to fetch fetcher first, have to use some hacks
     Sorcery.define = function(modulenames,callback) {
