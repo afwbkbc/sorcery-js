@@ -165,47 +165,92 @@ Sorcery.define([
     update_rewrites : function() {
 
       Sorcery.unrequire([
-        'controller/*',
+        'controller/*'
       ]);
       
-      Sorcery.require([
-        'controller/*',
-      ],function(){
-      
-        var controllers=arguments;
-      
-        var routemasks=[];
+      var routemasks={};
 
-        var pseudo_router={
+      var htmlpath='sorcery.html';
 
-          route : function(data) {
-            var pattern=data.pattern;
-            var pos;
-            while ((pos=pattern.indexOf(':'))>=0) {
-              var subpattern=pattern.substring(pos);
-              var pos2=subpattern.indexOf('/');
-              if (pos2>=0)
-                subpattern=subpattern.substring(0,pos2);
-              pattern=pattern.replace(subpattern,'([^/]+)');
-            }
-            routemasks.push(pattern);
+      var pseudo_router={
+
+        route : function(data) {
+          var pattern=data.pattern;
+          if (typeof(pattern)!=='string')
+            return;
+          var pos;
+          while ((pos=pattern.indexOf(':'))>=0) {
+            var subpattern=pattern.substring(pos);
+            var pos2=subpattern.indexOf('/');
+            if (pos2>=0)
+              subpattern=subpattern.substring(0,pos2);
+            pattern=pattern.replace(subpattern,'([^/]+)');
           }
-
-        };
-
-        for (var i in controllers) {
-          var c=controllers[i];
-          if ((typeof(c)!=='undefined')&&(c.class_name==='controller'))
-            c.register(pseudo_router);
+          var type=data.type;
+          if (typeof(type)==='undefined')
+            type='controller';
+          
+          var target;
+          if (type==='controller')
+            target=htmlpath;
+          else if (type==='resource') {
+            var rpath=data.resource;
+            if (typeof(rpath)==='undefined')
+              rpath=data.pattern;
+            var resolve=Sorcery.resolve_resource(rpath);
+            if (resolve!==null) {
+              target=resolve;
+            }
+            else
+              target=null;
+          }
+          else
+            target=null;
+          
+          if (target!==null)
+            routemasks[pattern]=target;
         }
-        
-        var string='RewriteEngine on\nDirectorySlash off\n';
-        for (var i in routemasks)
-          string+='RewriteRule ^'+routemasks[i]+'$ sorcery.html [QSA,L]\n';
 
-        Fs.write_file('./.htaccess',string);
+      };
 
-      });
+      var cpaths=Sorcery.path_preparse('controller/*');
+      
+      var i;
+      Sorcery.loop.for(
+        function(){ i=0; },
+        function(){ return i<cpaths.length; },
+        function(){ i++; },
+        function(cont) {
+          var cpath=cpaths[i];
+          
+          try {
+            Sorcery.require(cpath,function(Controller){
+              
+              if ((typeof(Controller)!=='undefined')&&(Controller.class_name==='controller'))
+                Controller.register(pseudo_router);
+              
+              return cont();
+            });
+          } catch (e) {
+            return cont();
+          }
+          
+        },
+        function() {
+          
+          //console.log('ASD',routemasks);
+
+          var string=Fs.read_resource('base_htaccess');
+
+          //var string='RewriteEngine on\nDirectorySlash off\n';
+          for (var i in routemasks)
+            string+='RewriteRule ^'+i+'$ /'+routemasks[i]+' [QSA,L]\n';
+
+          Fs.write_file('./.htaccess',string);
+          
+        }
+      );
+      
     },
   
     maintain : function() {

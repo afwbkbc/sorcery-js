@@ -5064,6 +5064,10 @@ Sorcery.define([
     return Router.generate(route,params);
   });
   
+  Twig.exports.extendFunction('url',function(route,params){
+    return Sorcery.root_path+Router.generate(route,params);
+  });
+  
   Twig.extended=true;
   return Twig.exports;
 });

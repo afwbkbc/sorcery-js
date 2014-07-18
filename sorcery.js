@@ -45,7 +45,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     unrequire : function(modulenames) {
       if (typeof(modulenames)==='string')
         modulenames=[modulenames];
-      modulenames=Sorcery.require_preparse(modulenames);
+      modulenames=Sorcery.path_preparse(modulenames);
       for (var i in modulenames) {
         var modulename=modulenames[i];
         if (typeof(Sorcery.required[modulename])!=='undefined') {
@@ -132,7 +132,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return null;
     },
     
-    require_preparse : function(modulenames) {
+    path_preparse : function(modulenames) {
       if (typeof(modulenames)==='string')
         modulenames=[modulenames];
       var newmodulenames=[];
@@ -392,7 +392,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     Sorcery.require_towrap={};
     
     Sorcery.require = function(modulenames,callback) {
-      modulenames=Sorcery.require_preparse(modulenames);
+      modulenames=Sorcery.path_preparse(modulenames);
       var look_in=this.get_require_paths();
       var collectedmodules=[];
       var self=this;
@@ -594,7 +594,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               if (!modulenames.length)
                 return callback.apply(null);
               
-              modulenames=Sorcery.require_preparse(modulenames);
+              modulenames=Sorcery.path_preparse(modulenames);
               
               //console.log('MODULENAMES',modulenames);
               var tofetch=modulenames.length;

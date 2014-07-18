@@ -28,14 +28,16 @@ Sorcery.define([
         var element = e.target || e.srcElement;
         if (element.tagName === 'A') {
           var url=element.getAttribute('href');
+          if (url.indexOf(Sorcery.root_path)===0)
+            url=url.substring(Sorcery.root_path.length);
           if (url[0]==='/') {
             try {
-              self.redirect(url.substring(1));
+              var ret=self.redirect(url.substring(1));
             } catch (e) {
               console.error(e);
               return false;
             }
-            return false;
+            return ret;
           }
           else {
             if (element.target==='')
@@ -83,7 +85,7 @@ Sorcery.define([
       throw new Error('Route "'+name+'" does not exist!');
     },
     
-    handle_path : function(path) {
+    handle_path : function(path,previous_path) {
       
       var match=this.match_path(this.current_path);
       
@@ -91,13 +93,30 @@ Sorcery.define([
         // 404
       }
       else {
-        var ret=match.route.handler.apply(null,match.args);
-        if ((typeof(ret)==='array')||(typeof(ret)==='object')) {
-          Controller.set_views(ret);
-          //console.log('R',ret);
+        var route=match.route;
+        var type=route.type;
+        if (typeof(type)==='undefined')
+          type='controller';
+        if (type==='controller') {
+          var ret=match.route.handler.apply(null,match.args);
+          if ((typeof(ret)==='array')||(typeof(ret)==='object')) {
+            Controller.set_views(ret);
+          }
+        }
+        else if (type==='resource') {
+          
+          if (typeof(previous_path)==='undefined')
+            throw new Error('internal error: missing rewrite rule for resource');
+          
+          return true;
+          //window.open('/'+route.pattern,'');
+          //history.back();
+        }
+        else {
+          throw new Error('unknown route type "'+type+'"');
         }
       }
-
+      return false;
     },
     
     // TODO: optimize
@@ -154,11 +173,19 @@ Sorcery.define([
       if (path[0]==='/')
         path=path.substring(1);
       if (this.current_path!=path) {
+        var previous_path=this.current_path;
         this.current_path=path;
-        if (!nopushstate)
+        var ret=this.handle_path(this.current_path,previous_path);
+        if ((!nopushstate)&&(ret===false)) {
           history.pushState(null ,null, '/'+path);
-        this.handle_path(this.current_path);
+        }
+        else if (ret===true) {
+          this.current_path=previous_path;
+        }
+        return ret;
       }
+      else
+        return false;
     },
     
   });

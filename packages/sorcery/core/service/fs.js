@@ -133,6 +133,13 @@ Sorcery.define([
       return this.fs.readFileSync(path,'utf8');
     },
     
+    read_resource : function(path) {
+      var resolved=Sorcery.resolve_resource(path);
+      if (resolved===null)
+        throw new Error('resource "'+path+'" does not exist');
+      return this.read_file(resolved);
+    }
+    
   });
   
 });
