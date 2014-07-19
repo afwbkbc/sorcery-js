@@ -67,6 +67,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return look_in;
     },
     
+    set_packages : function(packages) {
+      this.packages=packages;
+    },
+    
     set_path_cache : function(path_cache) {
       this.path_cache=path_cache;
     },
