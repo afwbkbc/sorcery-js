@@ -262,7 +262,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     call_stack_last_id : null,
     
     method : function(func) {
-      return function() {
+      return function(__SORCERY_METHOD__) {
         var args=[];
         for (var i=0;i<arguments.length;i++)
           args.push(arguments[i]);
@@ -283,8 +283,43 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       };
     },
 
-    call : function(func) {
-      console.log('CALL',func);
+    call : function() {
+      var func=arguments[0];
+      if (typeof(func)!=='function')
+        throw new Error('first argument of Sorcery.call must be function, '+func+' given');
+      var parameters=[];
+      var callback=null;
+      for (var i in arguments) {
+        if (+i===0)
+          continue;
+        var a=arguments[i];
+        if (+i===arguments.length-1) {
+          if (typeof(a)!=='function')
+            throw new Error('last argument of Sorcery.call must be function, '+a+' given');
+          callback=a;
+        }
+        else
+          parameters.push(a);
+      }
+      var str=func.toString();
+      
+      var search='function (__SORCERY_METHOD__)';
+      if (str.substring(0,search.length)===search) { // its Sorcery method
+        parameters.push(function(){
+          if (typeof(callback)==='function') {
+            var callbackowner=callback.owner;
+            if (!callbackowner)
+              callbackowner=null;
+            return callback.apply(callbackowner,arguments);
+          }
+        });
+        func.apply(func.owner,parameters);
+      }
+      else { // regular method
+        var ret=func.apply(func.owner,parameters);
+        if (typeof(callback)==='function')
+          return callback(ret);
+      }
     },
     
     begin : function() {
@@ -566,13 +601,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                       throw new Error;
                     loaded=true;
                     Cli.print('\n');
-                    Command.run(Cli.get_parameters());
-                    Cli.print('\n');
-                    return Sorcery.exit();
+                    Sorcery.call(Command.run,Cli.get_parameters(),function(){
+                      Cli.print('\n');
+                      return Sorcery.exit();
+                    });
                   });
                 } catch (e) {
                   if (!loaded) {
-                    Cli.print('Command "'+command+'" does not exist!\n');
+                    Cli.print('Command "'+command+'" does not exist! Run "'+process.argv[0]+' sorcery.js help" to see available commands.\n');
                     return Sorcery.exit();
                   }
                   else throw e;
