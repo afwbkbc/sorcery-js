@@ -9,7 +9,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
     ENVIRONMENT_CLI : 'cli',
     ENVIRONMENT_WEB : 'web',
-      
+
+    origin_url : 'http://sorcery.lh',
+    
     packages : [ 'sorcery/core' ],
     
     node_dependencies : [
@@ -406,6 +408,28 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     exit : function() {
       this.stop_intervals();
       process.exit();
+    },
+    
+    exec : function(cmd,callback) {
+      if (typeof(this.cp)==='undefined')
+        this.cp=require('child_process');
+      this.cp.exec(cmd,function(a,result,err){
+        if (typeof(callback)==='function')
+          callback(result,err);
+      });
+    },
+    
+    restart : function() {
+      Sorcery.stop_intervals();
+      var cmd='';
+      for (var i in process.argv)
+        cmd+=' '+process.argv[i];
+      if (process.argv.length<2)
+        cmd+=' ./sorcery.js';
+      this.exec(cmd.substring(1),function(result,err){
+        process.stdout.write(result+err);
+        Sorcery.exit();
+      });
     }
     
   };
@@ -416,31 +440,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     
     Sorcery.environment = Sorcery.ENVIRONMENT_CLI;
 
-    var fs=require("fs");
-    var cp=require("child_process");
-    
-    var exec=function(cmd,callback) {
-      //console.log('EXEC',cmd);
-      cp.exec(cmd,function(a,result,err){
-        if (typeof(callback)==='function')
-          callback(result,err);
-      });
-    };
-    
-    var relaunch=function(){
-      Sorcery.stop_intervals();
-      //console.log('RELAUNCH');
-      var cmd='';
-      for (var i in process.argv)
-        cmd+=' '+process.argv[i];
-      if (process.argv.length<2)
-        cmd+=' ./sorcery.js';
-      exec(cmd.substring(1),function(result,err){
-        process.stdout.write(result+err);
-        Sorcery.exit();
-      });
-    }
-
     var fname=module.filename;
 
     var stdinstring='[stdin]';
@@ -448,8 +447,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       var code=process._eval;
       if (!code)
         throw new Error('internal error: process._eval failed');
-      fs.writeFileSync('./sorcery.js',code,'utf8');
-      relaunch();
+      require("fs").writeFileSync('./sorcery.js',code,'utf8');
+      Sorcery.restart();
     }
     else {
       
@@ -462,6 +461,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       process.chdir(Sorcery.root_path);
 
       var coredir='./packages/sorcery/core';
+      var fs=require("fs");
       if (!fs.existsSync(coredir)) {
         var giturl='/home/nj/work/sorceryjs.lh/packages/sorcery/core';
         process.stdout.write('downloading sorcery/core...');
@@ -469,7 +469,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           if (!fs.existsSync(coredir+'/.git'))
             throw new Error('cloning core failed (source: '+giturl+', dest: '+coredir+')');
           process.stdout.write('done\n');
-          relaunch();
+          Sorcery.restart();
         });
       }
 
