@@ -12,6 +12,12 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       
     packages : [ 'sorcery/core' ],
     
+    node_dependencies : [
+      'chokidar',
+      'nodegit',
+      'node-sass'
+    ],
+    
     path_cache : {},
     resource_cache : {},
 
@@ -338,6 +344,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     },
     
     interval : function(callback,ms) {
+      
       var index=this.intervals.length;
       this.intervals.push(setInterval(function(){
         var ret=callback();
@@ -348,182 +355,264 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       },ms));
     },
     
-    exit : function() {
+    stop_intervals : function() {
       for (var i in this.intervals) {
         var interval=this.intervals[i];
-        if (interval!==false)
+        if (interval!==false) {
           clearInterval(interval);
+        }
       }
+    },
+    
+    exit : function() {
+      this.stop_intervals();
+      process.exit();
     }
     
   };
   
   Sorcery=GLOBAL.Sorcery;
   
-  Sorcery.interval(function(){
-    var q=Sorcery.async_queue[0];
-    if (typeof(q)!=='undefined') {
-      Sorcery.async_queue=Sorcery.async_queue.splice(1);
-      q.func.apply(this,q.args);
-      //console.log('CALL',q);
-    }
-  },1);
-  
   if (typeof module !== 'undefined' && module.exports) {
     
     Sorcery.environment = Sorcery.ENVIRONMENT_CLI;
 
-    var fname=module.filename;
-    var fnamepos=fname.lastIndexOf('/sorcery.js');
-    if (fnamepos<0)
-      throw new Error('internal error: module.filename does not contain "/sorcery.js"');
-
-    Sorcery.root_path=fname.substring(0,fnamepos);
+    var fs=require("fs");
+    var cp=require("child_process");
     
-    process.chdir(Sorcery.root_path);
-
-    try {
-      require('./cache.js');
-    } catch (e) {
-      if (e.code !== 'MODULE_NOT_FOUND')
-        throw e;
+    var exec=function(cmd,callback) {
+      //console.log('EXEC',cmd);
+      cp.exec(cmd,function(a,result,err){
+        if (typeof(callback)==='function')
+          callback(result,err);
+      });
+    };
+    
+    var relaunch=function(){
+      Sorcery.stop_intervals();
+      //console.log('RELAUNCH');
+      var cmd='';
+      for (var i in process.argv)
+        cmd+=' '+process.argv[i];
+      if (process.argv.length<2)
+        cmd+=' ./sorcery.js';
+      exec(cmd.substring(1),function(result,err){
+        process.stdout.write(result+err);
+        Sorcery.exit();
+      });
     }
-    
-    Sorcery.require_towrap={};
-    
-    Sorcery.require = function(modulenames,callback) {
-      modulenames=Sorcery.path_preparse(modulenames);
-      var look_in=this.get_require_paths();
-      var collectedmodules=[];
-      var self=this;
-      var innerloop=function() {
-        while (modulenames.length) {
-          var modulename=modulenames[0];
-          modulenames=modulenames.splice(1);
-          if (typeof(self.required[modulename])==='undefined') {
-            var module=null;
-            for (var ii in look_in) {
-              try {
-                var modulepath=require.resolve(look_in[ii]+modulename);
-              } catch (e) {
-                if (e.code!=='MODULE_NOT_FOUND')
-                  throw e;
-                else
-                  continue;
+
+    var fname=module.filename;
+
+    var stdinstring='[stdin]';
+    if (fname.lastIndexOf(stdinstring)===fname.length-stdinstring.length) {
+      var code=process._eval;
+      if (!code)
+        throw new Error('internal error: process._eval failed');
+      fs.writeFileSync('./sorcery.js',code,'utf8');
+      relaunch();
+    }
+    else {
+      
+      var fnamepos=fname.lastIndexOf('/sorcery.js');
+      if (fnamepos<0)
+        throw new Error('internal error: module.filename does not contain "/sorcery.js"');
+
+      Sorcery.root_path=fname.substring(0,fnamepos);
+
+      process.chdir(Sorcery.root_path);
+
+      var coredir='./packages/sorcery/core';
+      if (!fs.existsSync(coredir)) {
+        var giturl='/home/nj/work/sorceryjs.lh/packages/sorcery/core';
+        process.stdout.write('downloading sorcery/core...');
+        exec('git clone '+giturl+' '+coredir,function(result,err){
+          if (!fs.existsSync(coredir+'/.git'))
+            throw new Error('cloning core failed (source: '+giturl+', dest: '+coredir+')');
+          process.stdout.write('done\n');
+          relaunch();
+        });
+      }
+
+      else {
+        
+        try {
+          require('./cache.js');
+        } catch (e) {
+          if (e.code !== 'MODULE_NOT_FOUND')
+            throw e;
+        }
+
+        Sorcery.require_towrap={};
+
+        Sorcery.require = function(modulenames,callback) {
+          modulenames=Sorcery.path_preparse(modulenames);
+          var look_in=this.get_require_paths();
+          var collectedmodules=[];
+          var self=this;
+          var innerloop=function() {
+            while (modulenames.length) {
+              var modulename=modulenames[0];
+              modulenames=modulenames.splice(1);
+              if (typeof(self.required[modulename])==='undefined') {
+                var module=null;
+                for (var ii in look_in) {
+                  try {
+                    var modulepath=require.resolve(look_in[ii]+modulename);
+                  } catch (e) {
+                    if (e.code!=='MODULE_NOT_FOUND')
+                      throw e;
+                    else
+                      continue;
+                  }
+                  self.requiring[modulepath]=modulename;
+                  if (typeof(Sorcery.require_towrap[modulepath])==='undefined') {
+                    Sorcery.require_towrap[modulepath]=true;
+                    module=require(modulepath);
+                  }
+                  else {
+                    Sorcery.require([
+                      'service/fs',
+                    ],function(Fs){
+                      var code=Fs.read_file(modulepath);
+                      var wrapargs=function(first,second,third) {
+                        eval(code);
+                        module={};
+                      };
+                      return wrapargs(null,null,{
+                        id:modulepath
+                      });
+                    });
+                  }
+                  break;
+                }
+                if (module===null) {
+                  // maybe cache is outdated, no reason to emit error?
+                  //throw new Error('Module "'+modulename+'" could not be found in any paths ('+JSON.stringify(look_in)+')!');
+                  collectedmodules.push(null);
+                }
               }
-              self.requiring[modulepath]=modulename;
-              if (typeof(Sorcery.require_towrap[modulepath])==='undefined') {
-                Sorcery.require_towrap[modulepath]=true;
-                module=require(modulepath);
+              collectedmodules.push(self.required[modulename]);
+            }
+            callback.apply(null,collectedmodules);
+          };
+          innerloop();
+        };
+
+        Sorcery.requiring = [];
+
+        Sorcery.define = function(modulenames,callback) {
+          var modulepath=arguments.callee.caller.arguments[2].id;
+          var modulename=this.requiring[modulepath];
+          if (modulename) {
+            Sorcery.require(modulenames,function(){
+              var ret=callback.apply(null,arguments);
+              Sorcery.required[modulename]=ret;
+            });
+            delete this.requiring[modulepath];
+          }
+        };
+
+        exports={
+            Sorcery:GLOBAL.Sorcery
+        };
+        
+        Sorcery.require([
+          'service/aux',
+          'service/fs',
+          'service/cli'
+        ],function(Aux,Fs,Cli){
+          
+          var deps=[];
+          for (var i in Sorcery.node_dependencies) {
+            var dep=Sorcery.node_dependencies[i];
+            if (!Fs.file_exists('./node_modules/'+dep))
+              deps.push(dep);
+          }
+          
+          var idep;
+          
+          Sorcery.interval(function(){
+            var q=Sorcery.async_queue[0];
+            if (typeof(q)!=='undefined') {
+              Sorcery.async_queue=Sorcery.async_queue.splice(1);
+              q.func.apply(this,q.args);
+            }
+          },1);
+
+          Sorcery.loop.for(
+            function() { idep=0; },
+            function() { return idep<deps.length; },
+            function() { idep++; },
+            function(cont) {
+              var dep=deps[idep];
+              
+              /*exec('npm install '+dep,function(result,err){
+                process.stdout.write(result+err);
+                return cont();
+              });*/
+              throw new Error('please install "'+dep+'" module ("npm install '+dep+'")');
+              
+            },
+            function() {
+              
+              var command=Cli.get_parameter(0);
+
+              if (command) {
+                var loaded=false;
+                try {
+                  Sorcery.require('command/'+command,function(Command){
+                    if (Command===null)
+                      throw new Error;
+                    loaded=true;
+                    Cli.print('\n');
+                    Command.run(Cli.get_parameters());
+                    Cli.print('\n');
+                    return Sorcery.exit();
+                  });
+                } catch (e) {
+                  if (!loaded) {
+                    Cli.print('Command "'+command+'" does not exist!\n');
+                    return Sorcery.exit();
+                  }
+                  else throw e;
+                }
               }
               else {
-                Sorcery.require([
-                  'service/fs',
-                ],function(Fs){
-                  var code=Fs.read_file(modulepath);
-                  var wrapargs=function(first,second,third) {
-                    eval(code);
-                    module={};
-                  };
-                  return wrapargs(null,null,{
-                    id:modulepath
-                  });
-                });
+
+                if (!Fs.file_exists('./app'))
+                  Fs.mkdir('./app');
+
+                if (!Fs.file_exists('./cache.js')) {
+                  Cli.print('initializing cache...');
+                  Cli.mute();
+                  Aux.update_cache();
+                  Aux.reload_cache();
+                  Cli.unmute();
+                  Cli.print('done\n');
+                }
+
+                var files=Fs.list_directory('./app');
+                if (!files.length) {
+                  Aux.init_app();
+
+                  Cli.mute();
+                  Aux.update_cache();
+                  Cli.unmute();
+
+                  Aux.reload_cache();
+
+                }
+
+                Cli.print('\n[!] sorcery backend started\n\n');
+
+                require('./app/backend.js');
               }
-              break;
             }
-            if (module===null) {
-              // maybe cache is outdated, no reason to emit error?
-              //throw new Error('Module "'+modulename+'" could not be found in any paths ('+JSON.stringify(look_in)+')!');
-              collectedmodules.push(null);
-            }
-          }
-          collectedmodules.push(self.required[modulename]);
-        }
-        callback.apply(null,collectedmodules);
-      };
-      innerloop();
-    };
-    
-    Sorcery.requiring = [];
-    
-    Sorcery.define = function(modulenames,callback) {
-      var modulepath=arguments.callee.caller.arguments[2].id;
-      var modulename=this.requiring[modulepath];
-      if (modulename) {
-        Sorcery.require(modulenames,function(){
-          var ret=callback.apply(null,arguments);
-          Sorcery.required[modulename]=ret;
+          );
         });
-        delete this.requiring[modulepath];
       }
-    };
-    
-    exports={
-        Sorcery:GLOBAL.Sorcery,
-    };
-
-    Sorcery.require([
-      'service/aux',
-      'service/fs',
-      'service/cli',
-    ],function(Aux,Fs,Cli){
-
-      var command=Cli.get_parameter(0);
-      
-      if (command) {
-        var loaded=false;
-        try {
-          Sorcery.require('command/'+command,function(Command){
-            if (Command===null)
-              throw new Error;
-            loaded=true;
-            Cli.print('\n');
-            Command.run(Cli.get_parameters());
-            Cli.print('\n');
-            return Sorcery.exit();
-          });
-        } catch (e) {
-          if (!loaded) {
-            Cli.print('Command "'+command+'" does not exist!\n');
-            return Sorcery.exit();
-          }
-          else throw e;
-        }
-      }
-      else {
-
-        if (!Fs.file_exists('./app'))
-          Fs.mkdir('./app');
-
-        if (!Fs.file_exists('./cache.js')) {
-          Cli.print('initializing cache...');
-          Cli.mute();
-          Aux.update_cache();
-          Aux.reload_cache();
-          Cli.unmute();
-          Cli.print('done\n');
-        }
-
-        var files=Fs.list_directory('./app');
-        if (!files.length) {
-          Aux.init_app();
-          
-          Cli.mute();
-          Aux.update_cache();
-          Cli.unmute();
-          
-          Aux.reload_cache();
-          
-        }
-    
-        Cli.print('\n[!] sorcery backend started\n\n');
-    
-        require('./app/backend.js');
-      }
-    
-    });
-
+    }
   }
   else {
     Sorcery.environment = Sorcery.ENVIRONMENT_WEB;
