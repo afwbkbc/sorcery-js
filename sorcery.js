@@ -81,7 +81,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       this.resource_cache=resource_cache;
     },
     
-    resolve_path : function(path,type) {
+    resolve_path : function(path,type,preferredpackage) {
       var types=[];
       if (type.indexOf('*')===type.length-1) {
         for (var i in Sorcery.path_cache)
@@ -96,7 +96,27 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         if (typeof(pc)!=='undefined') {
           var p=pc[path];
           if (typeof(p)!=='undefined') {
-            var ret=p+path;
+            var bestp=null;
+            for (var ii in p) {
+              var pp=p[ii];
+              if (preferredpackage===null) {
+                if (pp.indexOf('./app/')===0) {
+                  bestp=pp;
+                  break;
+                }
+              }
+              else if (typeof(preferredpackage)==='string') {
+                if (pp.indexOf('./packages/'+preferredpackage+'/')===0) {
+                  bestp=pp;
+                  break;
+                }
+              }
+              if (pp.indexOf('./app/')===0)
+                bestp=pp;
+              else if (bestp===null)
+                bestp=pp;
+            }
+            var ret=bestp+path;
             if (Sorcery.environment===Sorcery.ENVIRONMENT_WEB)
               ret='/'+ret;
             return ret;
@@ -106,7 +126,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return null;
     },
     
-    resolve_file : function(path) {
+    resolve_file : function(path,preferredpackage) {
       
       var epos=path.lastIndexOf('.');
       if (epos>=0) {
@@ -121,7 +141,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               var ext=engines[ii];
               if (ext===extension) {
                 var basename=path.substring(0,epos);
-                var ret=Sorcery.resolve_path(basename,i+'/'+ii);
+                var ret=Sorcery.resolve_path(basename,i+'/'+ii,preferredpackage);
                 if (ret!==null)
                   ret+=extension;
                 return ret;
@@ -484,15 +504,18 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
         Sorcery.require_towrap={};
 
-        Sorcery.require = function(modulenames,callback) {
+        Sorcery.require = function(modulenames,callback,preferredpackage) {
           modulenames=Sorcery.path_preparse(modulenames);
           var look_in=this.get_require_paths();
           var collectedmodules=[];
           var self=this;
           var innerloop=function() {
             while (modulenames.length) {
-              var modulename=modulenames[0];
+              var modulename=Sorcery.resolve_path(modulenames[0],'js',preferredpackage);
               modulenames=modulenames.splice(1);
+              if (modulename===null)
+                continue;
+              
               if (typeof(self.required[modulename])==='undefined') {
                 var module=null;
                 for (var ii in look_in) {
@@ -544,10 +567,28 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           var modulepath=arguments.callee.caller.arguments[2].id;
           var modulename=this.requiring[modulepath];
           if (modulename) {
+            var packagesstr='./packages/';
+            var preferredpackage;
+            if (modulename.indexOf(packagesstr)<0)
+              preferredpackage=null;
+            else {
+              var f=modulename.substring(packagesstr.length);
+              var p;
+              if ((p=f.indexOf('/'))>=0) {
+                preferredpackage=f.substring(0,p);
+                f=f.substring(p+1);
+                if ((p=f.indexOf('/'))>=0)
+                  preferredpackage+='/'+f.substring(0,p);
+                else
+                  preferredpackage=null;
+              }
+              else
+                preferredpackage=null;
+            }
             Sorcery.require(modulenames,function(){
               var ret=callback.apply(null,arguments);
               Sorcery.required[modulename]=ret;
-            });
+            },preferredpackage);
             delete this.requiring[modulepath];
           }
         };
