@@ -503,13 +503,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
       else {
         
-        try {
-          require('./cache.js');
-        } catch (e) {
-          if (e.code !== 'MODULE_NOT_FOUND')
-            throw e;
-        }
-
         Sorcery.require_towrap={};
 
         Sorcery.require = function(modulenames,callback,preferredpackage) {
@@ -605,6 +598,40 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             Sorcery:GLOBAL.Sorcery
         };
         
+        try {
+          require('./cache.js');
+        } catch (e) {
+          if (e.code !== 'MODULE_NOT_FOUND')
+            throw e;
+          else {
+            var corepkg=['./packages/sorcery/core/'];
+            Sorcery.set_path_cache({
+              js:{
+                'class/class':corepkg,
+                'class/service':corepkg,
+                'service/cli':corepkg,
+                'service/aux':corepkg,
+                'service/fs':corepkg
+              }
+            });
+            Sorcery.require([
+              'service/cli',
+              'service/aux'
+            ],function(Cli,Aux){
+
+              console.log('CLIAUX',typeof(Cli),typeof(Aux));
+            
+              Cli.print('initializing cache...');
+              Cli.mute();
+              Aux.update_cache();
+              Aux.reload_cache();
+              Cli.unmute();
+              Cli.print('done\n');
+              
+            });
+          }
+        }
+
         Sorcery.require([
           'service/aux',
           'service/fs',
@@ -663,15 +690,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
 
                 if (!Fs.file_exists('./app'))
                   Fs.mkdir('./app');
-
-                if (!Fs.file_exists('./cache.js')) {
-                  Cli.print('initializing cache...');
-                  Cli.mute();
-                  Aux.update_cache();
-                  Aux.reload_cache();
-                  Cli.unmute();
-                  Cli.print('done\n');
-                }
 
                 var files=Fs.list_directory('./app');
                 if (!files.length) {
