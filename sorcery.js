@@ -520,7 +520,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       var coredir='./packages/sorcery/core';
       var fs=require("fs");
       if (!fs.existsSync(coredir)) {
-        var giturl='/home/nj/work/sorceryjs.lh/packages/sorcery/core';
+        var giturl='https://github.com/afwbkbc/sorcery-js-core.git';
         process.stdout.write('downloading sorcery/core...');
         Sorcery.exec('git clone '+giturl+' '+coredir,function(result,err){
           if (!fs.existsSync(coredir+'/.git'))
