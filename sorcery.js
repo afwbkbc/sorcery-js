@@ -82,6 +82,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     },
     
     resolve_path : function(path,type,preferredpackage) {
+      
+      if (path.substring(0,2)==='./')
+        return path;
+      
       var types=[];
       if (type.indexOf('*')===type.length-1) {
         for (var i in Sorcery.path_cache)
@@ -514,8 +518,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             while (modulenames.length) {
               var modulename=Sorcery.resolve_path(modulenames[0],'js',preferredpackage);
               modulenames=modulenames.splice(1);
-              if (modulename===null)
+              if (modulename===null) {
+                collectedmodules.push(null);
                 continue;
+              }
               
               if (typeof(self.required[modulename])==='undefined') {
                 var module=null;
@@ -525,8 +531,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
                   } catch (e) {
                     if (e.code!=='MODULE_NOT_FOUND')
                       throw e;
-                    else
+                    else {
+                      collectedmodules.push(null);
                       continue;
+                    }
                   }
                   self.requiring[modulepath]=modulename;
                   if (typeof(Sorcery.require_towrap[modulepath])==='undefined') {
@@ -619,8 +627,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
               'service/aux'
             ],function(Cli,Aux){
 
-              console.log('CLIAUX',typeof(Cli),typeof(Aux));
-            
               Cli.print('initializing cache...');
               Cli.mute();
               Aux.update_cache();
