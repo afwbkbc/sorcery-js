@@ -669,6 +669,15 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           'service/cli'
         ],function(Aux,Fs,Cli){
           
+          if (!Fs.file_exists('./sorcery.html')) {
+            var resolved=Sorcery.resolve_resource('base_html');
+            if (resolved===null)
+              throw new Error('internal error: base html resource not found');
+            Cli.print('initializing sorcery.html...');
+            Fs.copy_file(resolved,'./sorcery.html');
+            Cli.print('done\n');
+          }
+          
           var deps=[];
           for (var i in Sorcery.node_dependencies) {
             var dep=Sorcery.node_dependencies[i];
