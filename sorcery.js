@@ -465,7 +465,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       if (!fs.existsSync(coredir)) {
         var giturl='/home/nj/work/sorceryjs.lh/packages/sorcery/core';
         process.stdout.write('downloading sorcery/core...');
-        exec('git clone '+giturl+' '+coredir,function(result,err){
+        Sorcery.exec('git clone '+giturl+' '+coredir,function(result,err){
           if (!fs.existsSync(coredir+'/.git'))
             throw new Error('cloning core failed (source: '+giturl+', dest: '+coredir+')');
           process.stdout.write('done\n');
