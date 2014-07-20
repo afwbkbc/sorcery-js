@@ -437,9 +437,35 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     exec : function(cmd,callback) {
       if (typeof(this.cp)==='undefined')
         this.cp=require('child_process');
-      this.cp.exec(cmd,function(a,result,err){
+      var c='';
+      var args=[];
+      var p=cmd.indexOf(' ');
+      if (p>=0) {
+        c=cmd.substring(0,p);
+        do {
+          cmd=cmd.substring(p+1);
+          p=cmd.indexOf(' ');
+          if (p>=0) {
+            var a=cmd.substring(0,p);
+            if (a.length>0)
+              args.push(a);
+          }
+        } while (p>=0);
+        if (cmd.length>0)
+          args.push(cmd);
+      }
+      else
+        c=cmd;
+      var p=this.cp.spawn(c,args);
+      p.stdout.on('data',function(data){
+        process.stdout.write(data);
+      });
+      p.stderr.on('data',function(data){
+        process.stderr.write(data);
+      });
+      p.on('exit',function(code){
         if (typeof(callback)==='function')
-          callback(result,err);
+          callback(code);
       });
     },
     
@@ -450,8 +476,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         cmd+=' '+process.argv[i];
       if (process.argv.length<2)
         cmd+=' ./sorcery.js';
-      this.exec(cmd.substring(1),function(result,err){
-        process.stdout.write(result+err);
+      this.exec(cmd.substring(1),function(code){
         Sorcery.exit();
       });
     }
@@ -653,6 +678,13 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           
           var idep;
           
+          if (deps.length>0) {
+            Cli.print('\ninstalling required nodejs modules:');
+            for (var i in deps)
+              Cli.print(' '+deps[i]);
+            Cli.print('\n\n');
+          }
+          
           Sorcery.loop.for(
             function() { idep=0; },
             function() { return idep<deps.length; },
@@ -660,11 +692,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             function(cont) {
               var dep=deps[idep];
               
-              /*exec('npm install '+dep,function(result,err){
-                process.stdout.write(result+err);
+              Sorcery.exec('npm install '+dep,function(code){
                 return cont();
-              });*/
-              throw new Error('please install "'+dep+'" module ("npm install '+dep+'")');
+              });
               
             },
             function() {
