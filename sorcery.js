@@ -456,6 +456,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   
   Sorcery=GLOBAL.Sorcery;
   
+  Sorcery.interval(function(){
+    var q=Sorcery.async_queue[0];
+    if (typeof(q)!=='undefined') {
+      Sorcery.async_queue=Sorcery.async_queue.splice(1);
+      q.func.apply(this,q.args);
+    }
+  },1);
+
   if (typeof module !== 'undefined' && module.exports) {
     
     Sorcery.environment = Sorcery.ENVIRONMENT_CLI;
@@ -612,14 +620,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           
           var idep;
           
-          Sorcery.interval(function(){
-            var q=Sorcery.async_queue[0];
-            if (typeof(q)!=='undefined') {
-              Sorcery.async_queue=Sorcery.async_queue.splice(1);
-              q.func.apply(this,q.args);
-            }
-          },1);
-
           Sorcery.loop.for(
             function() { idep=0; },
             function() { return idep<deps.length; },
