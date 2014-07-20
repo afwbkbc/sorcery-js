@@ -10,7 +10,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     ENVIRONMENT_CLI : 'cli',
     ENVIRONMENT_WEB : 'web',
 
-    origin_url : 'http://sorcery.lh',
+    origin_url : 'http://sorceryjs.lh',
     
     packages : [ 'sorcery/core' ],
     
