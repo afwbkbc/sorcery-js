@@ -30,15 +30,15 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     intervals : [],
   
     async_queue : [],
-  
+
     engines : {
       template : {
         twig:'.html.twig',
-        static:'.html',
+        static:'.html'
       },
       style : {
-        static:'.css',
-      },
+        static:'.css'
+      }
     },
     
     compilers : {
@@ -46,7 +46,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         type:'style',
         engine:'static',
         source:'.scss',
-        dest:'.css',
+        dest:'.css'
       }
     },
     
