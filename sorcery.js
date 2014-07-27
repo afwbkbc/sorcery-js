@@ -434,9 +434,11 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       process.exit();
     },
     
-    exec : function(cmd,callback) {
+    exec : function(cmd,callback,options) {
       if (typeof(this.cp)==='undefined')
         this.cp=require('child_process');
+      if (typeof(options)==='undefined')
+        options={};
       var c='';
       var args=[];
       var p=cmd.indexOf(' ');
@@ -457,12 +459,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       else
         c=cmd;
       var p=this.cp.spawn(c,args);
-      p.stdout.on('data',function(data){
-        process.stdout.write(data);
-      });
-      p.stderr.on('data',function(data){
-        process.stderr.write(data);
-      });
+      if (!options.silent) {
+        p.stdout.on('data',function(data){
+          process.stdout.write(data);
+        });
+        p.stderr.on('data',function(data){
+          process.stderr.write(data);
+        });
+      }
       p.on('exit',function(code){
         if (typeof(callback)==='function')
           callback(code);
@@ -527,6 +531,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             throw new Error('cloning core failed (source: '+giturl+', dest: '+coredir+')');
           process.stdout.write('done\n');
           Sorcery.restart();
+        },{
+          silent:true
         });
       }
 
