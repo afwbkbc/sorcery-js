@@ -1022,6 +1022,5 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     
     delete GLOBAL;
   }
-  
-    
+
 };
