@@ -244,10 +244,20 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return ret;
     },
 
+    apply : function(func,args,callback) {
+      if (typeof(func)!=='function')
+        throw new Error('First argument of Sorcery.apply must be function, '+typeof(func)+' given!');
+      if ((typeof(args)!=='object')||(args.constructor !== Array))
+        throw new Error('Second argument of Sorcery.apply must be array, '+typeof(args)+' given!');
+      if (typeof(callback)==='function')
+        args.push(callback);
+      return Sorcery.call.apply(this,args);
+    },
+
     call : function() {
       var func=arguments[0];
       if (typeof(func)!=='function')
-        throw new Error('first argument of Sorcery.call must be function, '+func+' given');
+        throw new Error('First argument of Sorcery.call must be function, '+typeof(func)+' given!');
       var parameters=[];
       var callback=null;
       for (var i in arguments) {
@@ -255,9 +265,12 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           continue;
         var a=arguments[i];
         if (+i===arguments.length-1) {
-          if (typeof(a)!=='function')
-            throw new Error('last argument of Sorcery.call must be function, '+a+' given');
-          callback=a;
+          if (typeof(a)!=='function') {
+            callback=null;
+            parameters.push(a);
+          }
+          else
+            callback=a;
         }
         else
           parameters.push(a);
@@ -372,7 +385,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     },
     
     loop : {
-      
+
       for : function(init,condition,iterator,body,callback) {
         var breakfunc=function(){
           if (typeof(callback)==='function')
@@ -391,7 +404,46 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         };
         if (typeof(init)==='function')
           init();
-        continuefunc();
+        return continuefunc();
+      },
+      
+      while : function(condition,body,callback) {
+        var breakfunc=function(){
+          if (typeof(callback)==='function')
+            return callback();
+        };
+        var continuefunc=function(){
+          if ((typeof(condition)!=='function')||condition()) {
+            return body(function(){
+              return Sorcery.async(continuefunc);
+            },breakfunc);
+          }
+          else
+            return breakfunc();
+        };
+        return continuefunc();
+      },
+      
+      in : function(object,body,callback) {
+        var objdata=[];
+        for (var i in object)
+          objdata.push({
+            key:i,
+            value:object[i]
+          });
+        var i=0;
+        return Sorcery.loop.while(
+          function() { return i<objdata.length; },
+          function(cont,brk) {
+            var v=objdata[i];
+            i++;
+            if (typeof(body)==='function')
+              return body(v.key,v.value,cont,brk);
+            else
+              return cont();
+          },
+          callback
+        );
       }
       
     },
