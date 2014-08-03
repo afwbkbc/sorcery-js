@@ -197,78 +197,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return newmodulenames;
     },
     
-    get_class_chain : function(obj) {
-      obj=obj.this_class;
-      var chain=[];
-      do {
-        chain.push(obj);
-        obj=obj.parent_class;
-      } while (obj);
-      return chain;
-    },
-    
-    apply_chain : function(obj,method,chain,callback,args) {
-      var finished=[];
-      var next_func=function() {
-        chain=chain.splice(1);
-        if (chain.length)
-          return apply_func();
-        else {
-          if (typeof(callback)==='function')
-            return callback(obj);
-        }
-      };
-      var apply_func=function() {
-        var c=chain[0];
-        var cb=c[method];
-        if (typeof(cb)==='undefined') {
-          return next_func();
-        }
-        else {
-          for (var i in finished) {
-            if (finished[i]===cb)
-              return next_func();
-          }
-          var na=args.slice();
-          na.push(next_func);
-          finished.push(cb);
-          cb.apply(obj,na);
-        }
-      };
-      apply_func();
-    },
-    
-    apply : function(obj,method,callback,args) {
-      var chain=this.get_class_chain(obj);
-      this.apply_chain(obj,method,chain,callback,args);
-    },
-    
-    apply_reverse : function(obj,method,callback,args) {
-      var chain=this.get_class_chain(obj).reverse();
-      this.apply_chain(obj,method,chain,callback,args);
-    },
-    
-    construct : function(classobj) {
-      var newobj={};
-      for (var i in classobj) {
-        newobj[i]=classobj[i];
-      }
-      
-      if (typeof(newobj.construct)==='function') {
-        var args=[];
-        for (var i=1;i<arguments.length;i++)
-          args.push(arguments[i]);
-        var callback;
-        if (typeof(args[args.length-1])==='function')
-          callback=args.pop();
-        else callback=null;
-        Sorcery.apply_reverse(newobj,'construct',callback,args);
-      }
-      
-      return newobj;
-    },
-    
-    destroy : function(obj) {
+    /*destroy : function(obj) {
       if (typeof(obj.destroy)==='function') {
         var args=[];
         for (var i=1;i<arguments.length;i++)
@@ -277,7 +206,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         if (typeof(args[args.length-1])==='function')
           callback=args.pop();
         else callback=null;
-        Sorcery.apply(obj,'destroy',function(){
+        Sorcery.apply_forward(obj,'destroy',function(){
           for (var i in obj) {
             delete obj[i];
           };
@@ -286,13 +215,13 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
             return callback();
         },args);
       }
-    },
+    },*/
     
     call_stack : [],
     call_stack_last_id : null,
     
     method : function(func) {
-      return function(__SORCERY_METHOD__) {
+      var ret=function() {
         var args=[];
         for (var i=0;i<arguments.length;i++)
           args.push(arguments[i]);
@@ -311,6 +240,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         
         return func.apply(this,args);
       };
+      ret._s_sorcery_method=true;
+      return ret;
     },
 
     call : function() {
@@ -331,25 +262,92 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         else
           parameters.push(a);
       }
-      var str=func.toString();
       
-      var search='function (__SORCERY_METHOD__)';
-      if (str.substring(0,search.length)===search) { // its Sorcery method
-        parameters.push(function(){
+      var funcname=func._s_name;
+      var funcowner=func._s_owner;
+
+      var funcchain=[];
+      if (funcname==='construct') {
+        var o=funcowner;
+        while (o=o.parent_class)
+          if (typeof(o[funcname])==='function') {
+            if (funcchain.indexOf(o[funcname])<0)
+              funcchain.unshift(o[funcname]);
+          }
+      }
+      if (funcchain.indexOf(func)<0)
+        funcchain.push(func);
+      if (funcname==='destroy') {
+        var o=funcowner;
+        while (o=o.parent_class)
+          if (typeof(o[funcname])==='function') {
+            if (funcchain.indexOf(o[funcname])<0)
+              funcchain.push(o[funcname]);
+          }
+      }
+      
+      //console.log('CHAIN',funcchain);
+      
+      var retargs;
+      
+      var i;
+      Sorcery.loop.for(
+        function(){ i=0; },
+        function(){ return i<funcchain.length; },
+        function(){ i++; },
+        function(cont) {
+          var f=funcchain[i];
+          if (f,f._s_sorcery_method) {
+            parameters.push(function(){
+              retargs=arguments;
+              return cont();
+            });
+            f.apply(funcowner,parameters);
+            parameters.pop();
+          }
+          else {
+            retargs=[f.apply(funcowner,parameters)];
+            return cont();
+          }
+        },
+        function() {
           if (typeof(callback)==='function') {
-            var callbackowner=callback.owner;
+            var callbackowner=callback._s_owner;
             if (!callbackowner)
               callbackowner=null;
-            return callback.apply(callbackowner,arguments);
+            return callback.apply(callbackowner,retargs);
           }
-        });
-        func.apply(func.owner,parameters);
+      
+        }
+      );
+      
+      //console.log('CALL',func,funcname,funcowner,callback,funcchain);
+
+      /*var nextfunc=function(obj,methodname) {
+        
       }
-      else { // regular method
-        var ret=func.apply(func.owner,parameters);
-        if (typeof(callback)==='function')
-          return callback(ret);
-      }
+      
+      var tryfunc=function(obj,method) {
+        //console.log('TRY',obj,method,method.funcname);
+        if (str.substring(0,search.length)===search) { // its Sorcery method
+          parameters.push(function(a,b,c){
+            //console.log('APPLYRET1',a,b,c);
+            if (typeof(callback)==='function') {
+              return callback.apply(callbackowner,arguments);
+            }
+          });
+          //console.log('APPLY1',method,funcowner,parameters);
+          method.apply(funcowner,parameters);
+        }
+        else { // regular method
+          //console.log('APPLY2',method,funcowner,parameters);
+          var ret=method.apply(funcowner,parameters);
+          //console.log('APPLYRET2',ret);
+          if (typeof(callback)==='function')
+            return callback.apply(callbackowner,[ret]);
+        }
+      };
+      return tryfunc(funcowner,func);*/
     },
     
     begin : function() {
@@ -488,6 +486,50 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   };
   
   Sorcery=GLOBAL.Sorcery;
+  
+  Sorcery.construct = Sorcery.method(function(classobj){
+    var sid=Sorcery.begin();
+
+    var newobj=classobj.extend();
+
+    if (typeof(newobj.construct)==='function') {
+      var args=[];
+      for (var i=1;i<arguments.length;i++)
+        args.push(arguments[i]);
+      args.unshift(newobj.construct);
+      args.push(function(){
+        return Sorcery.end(sid,newobj);
+      });
+      Sorcery.call.apply(newobj,args);
+      
+    }
+    else
+      return Sorcery.end(sid,newobj);
+    
+  });
+  
+  Sorcery.destroy = Sorcery.method(function(obj){
+    var sid=Sorcery.begin();
+
+    if (typeof(obj.destroy)==='function') {
+      var args=[];
+      for (var i=1;i<arguments.length;i++)
+        args.push(arguments[i]);
+      args.unshift(obj.destroy);
+      args.push(function(){
+        for (var i in obj) {
+          delete obj[i];
+        };
+        obj._destroyed=true;
+        return Sorcery.end(sid);
+      });
+      Sorcery.call.apply(obj,args);
+      
+    }
+    else
+      return Sorcery.end(sid);
+    
+  });
   
   Sorcery.interval(function(){
     var q=Sorcery.async_queue[0];
