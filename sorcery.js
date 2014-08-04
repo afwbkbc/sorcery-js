@@ -29,6 +29,8 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   
     intervals : [],
   
+    uniqs : {},
+  
     async_queue : [],
 
     engines : {
@@ -48,6 +50,14 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         source:'.scss',
         dest:'.css'
       }
+    },
+    
+    unique_id : function(key) {
+      if (typeof(this.uniqs[key])==='undefined')
+        this.uniqs[key]=0;
+      var ret=this.uniqs[key];
+      this.uniqs[key]++;
+      return ret;
     },
     
     unrequire : function(modulenames) {
@@ -279,27 +289,58 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       var funcname=func._s_name;
       var funcowner=func._s_owner;
 
+      //if (funcname==='trigger')
+        //console.log('CALL',func,funcname,funcowner,parameters);
+
+      var recurseback=['construct'];
+      var recurseforw=['destroy'];
+
       var funcchain=[];
-      if (funcname==='construct') {
+      var funcids=[];
+      if (recurseback.indexOf(funcname)>=0) {
         var o=funcowner;
         while (o=o.parent_class)
           if (typeof(o[funcname])==='function') {
-            if (funcchain.indexOf(o[funcname])<0)
-              funcchain.unshift(o[funcname]);
+            if (funcchain.indexOf(o[funcname])<0) {
+              var id=o[funcname]._s_id;
+              //console.log('ID',id,o[funcname],o,funcname);
+              if (typeof(id)!=='undefined') {
+                if (funcids.indexOf(id)<0) {
+                  //console.log('ADD',o[funcname],funcname,id,o);
+                  funcids.unshift(id);
+                  funcchain.unshift(o[funcname]);
+                }
+              }
+            }
           }
       }
-      if (funcchain.indexOf(func)<0)
+      var id=func._s_id;
+      //console.log('ID',id,typeof(id));
+      //console.log('INDEXOF',funcowners,owner,funcowners.indexOf(owner));
+      if ((typeof(id)==='undefined')||(funcids.indexOf(id)<0)) {
+        //console.log('ADD',func,func._s_name,func._s_owner,funcowner);
+        funcids.push(id);
         funcchain.push(func);
-      if (funcname==='destroy') {
+      }
+      if (recurseforw.indexOf(funcname)>=0) {
         var o=funcowner;
         while (o=o.parent_class)
           if (typeof(o[funcname])==='function') {
-            if (funcchain.indexOf(o[funcname])<0)
-              funcchain.push(o[funcname]);
+            if (funcchain.indexOf(o[funcname])<0) {
+              var id=o[funcname]._s_id;
+              //console.log('ID',id);
+              if (typeof(id)!=='undefined') {
+                if (funcids.indexOf(id)<0) {
+                  //console.log('ADD',o[funcname],funcname,id);
+                  funcids.push(id);
+                  funcchain.push(o[funcname]);
+                }
+              }
+            }
           }
       }
       
-      //console.log('CHAIN',funcchain);
+      //console.log('CHAIN',funcchain,funcids);
       
       var retargs;
       
@@ -365,8 +406,10 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     
     begin : function() {
       var sid=Sorcery.call_stack_last_id;
-      if (sid===null)
+      if (sid===null) {
+        console.log('x',(new Error).stack);
         throw new Error('failed to get sid, Sorcery.begin() called in wrong place or multiple times?');
+      }
       Sorcery.call_stack_last_id=null;
       return sid;
     },
@@ -1074,5 +1117,16 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     
     delete GLOBAL;
   }
+
+  Function.prototype.clone = function() {
+      var that = this;
+      var temp = function () { return that.apply(this, arguments); };
+      for(var key in this) {
+          if (this.hasOwnProperty(key)) {
+              temp[key] = this[key];
+          }
+      }
+      return temp;
+  };
 
 };
