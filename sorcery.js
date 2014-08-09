@@ -286,9 +286,9 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           parameters.push(a);
       }
       
-      var funcname=func._s_name;
+      var funcname=func._s_method_name;
       var funcowner=func._s_owner;
-
+      
       //if (funcname==='trigger')
         //console.log('CALL',func,funcname,funcowner,parameters);
 
@@ -340,7 +340,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
           }
       }
       
-      //console.log('CHAIN',funcchain,funcids);
+      //console.log('CHAIN',funcname,funcowner,funcchain,funcids);
       
       var retargs;
       
@@ -351,7 +351,7 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         function(){ i++; },
         function(cont) {
           var f=funcchain[i];
-          if (f,f._s_sorcery_method) {
+          if (f._s_sorcery_method) {
             parameters.push(function(){
               retargs=arguments;
               return cont();
@@ -375,33 +375,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
         }
       );
       
-      //console.log('CALL',func,funcname,funcowner,callback,funcchain);
-
-      /*var nextfunc=function(obj,methodname) {
-        
-      }
-      
-      var tryfunc=function(obj,method) {
-        //console.log('TRY',obj,method,method.funcname);
-        if (str.substring(0,search.length)===search) { // its Sorcery method
-          parameters.push(function(a,b,c){
-            //console.log('APPLYRET1',a,b,c);
-            if (typeof(callback)==='function') {
-              return callback.apply(callbackowner,arguments);
-            }
-          });
-          //console.log('APPLY1',method,funcowner,parameters);
-          method.apply(funcowner,parameters);
-        }
-        else { // regular method
-          //console.log('APPLY2',method,funcowner,parameters);
-          var ret=method.apply(funcowner,parameters);
-          //console.log('APPLYRET2',ret);
-          if (typeof(callback)==='function')
-            return callback.apply(callbackowner,[ret]);
-        }
-      };
-      return tryfunc(funcowner,func);*/
     },
     
     begin : function() {
@@ -582,10 +555,61 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
   
   Sorcery=GLOBAL.Sorcery;
   
+  Sorcery.clone = function(v,depth) {
+    var ret;
+    
+    var type=typeof(v);
+    
+    if (!depth)
+      depth=0;
+    
+    if (type==='function') {
+      var origfunc=v;
+      ret=function(){
+        //console.log('CALL',origfunc,this,arguments);
+        return origfunc.apply(this,arguments);
+      };
+      for (var ii in origfunc) {
+        if (ii.substring(0,3)==='_s_')
+          ret[ii]=origfunc[ii];
+      }
+    }
+    else if (type==='object') {
+      if (depth>0) {
+        ret={};
+        for (var i in v) {
+          ret[i]=Sorcery.clone(v[i],depth-1);
+        }
+      }
+      else
+        ret=v;
+    }
+    else if (['boolean','string'].indexOf(type)>=0) {
+      ret=v;
+    }
+    else {
+      throw new Error('unknown type "'+type+'"');
+    }
+    
+    //console.log('CLONE',v,ret);
+    
+    return ret;
+  };
+  
   Sorcery.construct = Sorcery.method(function(classobj){
     var sid=Sorcery.begin();
 
-    var newobj=classobj.extend();
+    //var newobj=classobj.extend();
+    
+    var newobj={};
+    
+    for (var i in classobj) {
+      var v=classobj[i];
+      var vv=Sorcery.clone(v);
+      if (typeof(vv)==='function')
+        vv._s_owner=newobj;
+      newobj[i]=vv;
+    }
 
     if (typeof(newobj.construct)==='function') {
       var args=[];
@@ -1117,16 +1141,5 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     
     delete GLOBAL;
   }
-
-  Function.prototype.clone = function() {
-      var that = this;
-      var temp = function () { return that.apply(this, arguments); };
-      for(var key in this) {
-          if (this.hasOwnProperty(key)) {
-              temp[key] = this[key];
-          }
-      }
-      return temp;
-  };
 
 };
