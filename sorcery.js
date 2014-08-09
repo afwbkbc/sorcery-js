@@ -44,6 +44,11 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     },
     
     compilers : {
+      sjs:{
+        type:'js',
+        source:'.sjs',
+        dest:'.js'
+      },
       sass:{
         type:'style',
         engine:'static',
