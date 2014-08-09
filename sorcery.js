@@ -207,26 +207,6 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
       return newmodulenames;
     },
     
-    /*destroy : function(obj) {
-      if (typeof(obj.destroy)==='function') {
-        var args=[];
-        for (var i=1;i<arguments.length;i++)
-          args.push(arguments[i]);
-        var callback;
-        if (typeof(args[args.length-1])==='function')
-          callback=args.pop();
-        else callback=null;
-        Sorcery.apply_forward(obj,'destroy',function(){
-          for (var i in obj) {
-            delete obj[i];
-          };
-          obj._destroyed=true;
-          if (typeof(callback)==='function')
-            return callback();
-        },args);
-      }
-    },*/
-    
     call_stack : [],
     call_stack_last_id : null,
     
@@ -595,6 +575,47 @@ if (typeof(GLOBAL.Sorcery) === 'undefined') {
     
     return ret;
   };
+  
+  Sorcery.get = Sorcery.method(function(obj,key){
+    var sid=Sorcery.begin();
+    
+    if (typeof(obj)!=='object')
+      throw new Error('Sorcery.get called on non-object!');
+    
+    if (typeof(obj.get)==='function')
+      return Sorcery.call(obj.get,key,function(value){
+        return Sorcery.end(sid,value);
+      });
+    else
+      return Sorcery.end(sid,obj[key]);
+  });
+  
+  Sorcery.set = Sorcery.method(function(obj,k,v){
+    var sid=Sorcery.begin();
+    
+    if (typeof(obj)!=='object')
+      throw new Error('Sorcery.set called on non-object!');
+    
+    if (typeof(obj.set)==='function')
+      return Sorcery.call(obj.set,k,v,function(){
+        return Sorcery.end(sid);
+      });
+    else {
+      if (typeof(k)!=='object') {
+        if (typeof(k)!=='string')
+          throw new Error('second argument of Sorcery.set must be object or string, got "'+typeof(k)+'"!');
+        if (typeof(v)==='undefined')
+          throw new Error('Sorcery.set: missing value for "'+k+'"');
+        var newk={};
+        newk[k]=v;
+        k=newk;
+      }
+      for (var i in k) {
+        obj[i]=k[i];
+      }
+      return Sorcery.end(sid);
+    }
+  });
   
   Sorcery.construct = Sorcery.method(function(classobj){
     var sid=Sorcery.begin();
